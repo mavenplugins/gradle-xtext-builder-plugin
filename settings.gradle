@@ -1,0 +1,2 @@
+// Maven artifactId:
+rootProject.name = 'xtext-standalone-builder'

@@ -1,0 +1,17 @@
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+  - package-ecosystem: gradle
+    commit-message:
+      prefix: deps
+    directory: /
+    schedule:
+      interval: daily
+    ignore:
+      # org.codehaus.plexus must be managed manually
+      #   to keep it compliant with maven version
+      #- dependency-name: org.codehaus.plexus:plexus-cipher
+      #- dependency-name: org.codehaus.plexus:plexus-sec-dispatcher
