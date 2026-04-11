@@ -18,6 +18,7 @@
 
 package io.github.mavenplugins.gradle.xtext.plugin.integrationtest
 
+import org.apache.maven.artifact.versioning.ComparableVersion
 import org.gradle.testkit.runner.BuildResult
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -25,7 +26,10 @@ import static org.assertj.core.api.Assertions.assertThat
 
 class UnsupportedXtextVersionTest extends AbstractPluginIntegrationTest {
 
-    final static String XTEXT_VERSION_TESTED = '2.16.0'
+    @Override
+    ComparableVersion getXtextVersion() {
+        return new ComparableVersion('2.16.0')
+    }
 
     @BeforeEach
     @Override
@@ -33,7 +37,7 @@ class UnsupportedXtextVersionTest extends AbstractPluginIntegrationTest {
         super.setup()
         rootProject.buildFile << """
             xtextBuilder {
-                xtextVersion = '${XTEXT_VERSION_TESTED}'
+                xtextVersion = '${getXtextVersion()}'
             }
         """.stripIndent()
     }
@@ -41,6 +45,6 @@ class UnsupportedXtextVersionTest extends AbstractPluginIntegrationTest {
     @Test
     void failWithXtextVersionNotSupported() {
         BuildResult result = buildAndFail("build")
-        assertThat(result.output).contains("> Xtext version ${XTEXT_VERSION_TESTED} is not supported. The minimum version is ${XTEXT_MIN_VERSION}.")
+        assertThat(result.output).contains("> Xtext version ${getXtextVersion()} is not supported. The minimum version is ${XTEXT_MIN_VERSION}.")
     }
 }

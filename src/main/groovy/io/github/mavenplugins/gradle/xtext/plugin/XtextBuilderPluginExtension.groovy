@@ -48,7 +48,7 @@ abstract class XtextBuilderPluginExtension {
             'org.codehaus.groovy',
             'org.gradle',
             'org.slf4j',
-            PluginPackage.class.getPackageName()
+            PluginPackage.class.getPackage().getName()
     ]
     List<String> getDefaultGradleClassLoaderIncludes() {
         return defaultGradleClassLoaderIncludes.asImmutable()
@@ -84,6 +84,12 @@ abstract class XtextBuilderPluginExtension {
     @Input
     final Property<String> compilerTargetLevel
 
+    @Input
+    final Property<Boolean> failOnValidationError
+
+    @Input
+    final Property<Boolean> incrementalBuild
+
     @Inject
     XtextBuilderPluginExtension(ObjectFactory objects, ProjectLayout layout) {
         this.layout = layout
@@ -92,6 +98,8 @@ abstract class XtextBuilderPluginExtension {
         gradleClassLoaderExcludes = objects.listProperty(String).convention(getDefaultGradleClassLoaderExcludes())
         compilerSourceLevel = objects.property(String).convention(PluginResourcesUtil.defaultCompilerSourceLevel)
         compilerTargetLevel = objects.property(String).convention(PluginResourcesUtil.defaultCompilerTargetLevel)
+        failOnValidationError = objects.property(Boolean).convention(true)
+        incrementalBuild = objects.property(Boolean).convention(false)
     }
 
 

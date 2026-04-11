@@ -43,6 +43,8 @@ interface IXtextStandaloneBuilder extends Closeable {
 
     void setDebugLog(boolean debugLog)
 
+    void setIncrementalBuild(boolean incrementalBuild)
+
     void setWriteStorageResources(boolean writeStorageResources)
 
     void setClusteringConfig(Object clusteringConfig)
@@ -55,5 +57,7 @@ interface IXtextStandaloneBuilder extends Closeable {
             boolean PreserveInformationAboutFormalParameters)
 
     boolean launch()
+
+    int getGeneratedResourcesCount()
 
 }

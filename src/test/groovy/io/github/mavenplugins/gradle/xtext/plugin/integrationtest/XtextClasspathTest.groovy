@@ -18,6 +18,7 @@
 
 package io.github.mavenplugins.gradle.xtext.plugin.integrationtest
 
+import org.apache.maven.artifact.versioning.ComparableVersion
 import org.gradle.testkit.runner.BuildResult
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -26,9 +27,9 @@ import static org.assertj.core.api.Assertions.assertThat
 
 class XtextClasspathTest extends AbstractPluginIntegrationTest {
 
-    final static String XTEXT_VERSION_TESTED = '2.29.0'
     final static int EXPECTED_CLASSPATH_SIZE = 4
-    final static int EXPECTED_STANDALONE_CLASSPATH_SIZE = 58 + 3 // 3 is coming from integration test build class path directories
+    final static int EXPECTED_STANDALONE_CLASSPATH_SIZE_2_17_1 = 63 + 3 // 3 is coming from integration test build class path directories
+    final static int EXPECTED_STANDALONE_CLASSPATH_SIZE_2_29_0 = 81 + 3 // 3 is coming from integration test build class path directories
 
     @BeforeEach
     @Override
@@ -36,16 +37,18 @@ class XtextClasspathTest extends AbstractPluginIntegrationTest {
         super.setup()
         rootProject.buildFile << """
             xtextBuilder {
-                xtextVersion = '${XTEXT_VERSION_TESTED}'
+                xtextVersion = '${getXtextVersion()}'
             }
         """.stripIndent()
     }
 
     @Test
     void checkXtextClassPath() {
+        final int expectedStandaloneClasspathSize = getXtextVersion().compareTo(new ComparableVersion('2.29.0')) >= 0 ?
+                EXPECTED_STANDALONE_CLASSPATH_SIZE_2_29_0 : EXPECTED_STANDALONE_CLASSPATH_SIZE_2_17_1
         BuildResult result = build("generateXtext", "--info", "--logXtextConfig")
         assertThat(result.output).contains("====== Task 'GenerateXtextTask' classLoader URLs[${EXPECTED_CLASSPATH_SIZE}] - BEGIN ======")
-        assertThat(result.output).contains("====== Task 'GenerateXtextTask' xtextStandaloneClasspath URLs[${EXPECTED_STANDALONE_CLASSPATH_SIZE}] - BEGIN ======")
+        assertThat(result.output).contains("====== Task 'GenerateXtextTask' xtextStandaloneClasspath URLs[${expectedStandaloneClasspathSize}] - BEGIN ======")
         assertThat(result.output).contains("====== Task 'GenerateXtextTask' xtextCompilerClasspath URLs[0] - BEGIN ======")
     }
 }

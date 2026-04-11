@@ -29,8 +29,6 @@ abstract class AbstractIntegrationTest extends AbstractGradleBuildTest {
 
     protected static final String XTEXT_MIN_VERSION = "${PluginResourcesUtil.xtextMinVersion}"
 
-    final static ComparableVersion COMPARABLE_XTEXT_VERSION = new ComparableVersion(System.getProperty("xtext.version", "2.17.1"))
-
     @Override
     void setup() {
         super.setup()
@@ -51,10 +49,10 @@ org.gradle.daemon=false
 
     protected CharSequence getRepositories() {
         return """
-    		repositories {
-	    		mavenCentral()
-		    }
-	    """.stripIndent()
+            repositories {
+                mavenCentral()
+            }
+        """.stripIndent()
     }
 
     BuildTask getXtextTask(BuildResult buildResult) {
@@ -71,11 +69,7 @@ org.gradle.daemon=false
     }
 
     ComparableVersion getXtextVersion() {
-        return COMPARABLE_XTEXT_VERSION
-    }
-
-    ComparableVersion getGradleVersion() {
-        return COMPARABLE_GRADLE_VERSION
+        return new ComparableVersion(System.getProperty("xtext.version", XTEXT_MIN_VERSION))
     }
 
 }

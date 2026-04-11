@@ -20,6 +20,7 @@ package io.github.mavenplugins.gradle.xtext.plugin.internal;
 
 import java.net.URL;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Inspired by https://github.com/xtext/xtext-gradle-plugin/blob/master/xtext-gradle-plugin/src/main/java/org/xtext/gradle/tasks/internal/FilteringClassLoader.xtend
@@ -39,10 +40,10 @@ public class GradleRuntimeFilteringClassLoader extends ClassLoader {
 
     public GradleRuntimeFilteringClassLoader(ClassLoader parent, List<String> includes, List<String> excludes) {
         super(parent);
-        this.includes = includes.stream().map(it -> it + DOT).toList();
-        this.resourceIncludes = includes.stream().map(it -> it.replace(DOT, SLASH) + SLASH).toList();
-        this.excludes = excludes.stream().map(it -> it + DOT).toList();
-        this.resourceExcludes = excludes.stream().map(it -> it.replace(DOT, SLASH) + SLASH).toList();
+        this.includes = includes.stream().map(it -> it + DOT).collect(Collectors.toList());
+        this.resourceIncludes = includes.stream().map(it -> it.replace(DOT, SLASH) + SLASH).collect(Collectors.toList());
+        this.excludes = excludes.stream().map(it -> it + DOT).collect(Collectors.toList());
+        this.resourceExcludes = excludes.stream().map(it -> it.replace(DOT, SLASH) + SLASH).collect(Collectors.toList());
     }
 
     @Override

@@ -24,6 +24,7 @@ import io.github.mavenplugins.gradle.xtext.plugin.builderinterface.IXtextStandal
 import io.github.mavenplugins.gradle.xtext.plugin.dsl.LanguageDSL
 import io.github.mavenplugins.gradle.xtext.plugin.internal.guava.Preconditions
 import org.gradle.api.NamedDomainObjectContainer
+import org.gradle.api.logging.Logger
 
 class XtextStandaloneBuilderFactory implements IXtextStandaloneBuilderFactory {
 
@@ -32,8 +33,8 @@ class XtextStandaloneBuilderFactory implements IXtextStandaloneBuilderFactory {
                 "${XtextStandaloneBuilderFactory} must be loaded via child classloader of ${GradleRuntimeFilteringClassLoader}")
     }
     @Override
-    IXtextStandaloneBuilder get(NamedDomainObjectContainer<LanguageDSL> languageDSLs, URLClassLoader xtextClassLoader){
-        IXtextStandaloneBuilder builder = new XtextStandaloneBuilder()
+    IXtextStandaloneBuilder get(NamedDomainObjectContainer<LanguageDSL> languageDSLs, URLClassLoader xtextClassLoader, Logger logger){
+        IXtextStandaloneBuilder builder = new XtextStandaloneBuilder(logger)
         builder.setLanguages(languageDSLs)
         return builder
     }

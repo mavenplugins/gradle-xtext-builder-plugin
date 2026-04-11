@@ -45,7 +45,8 @@ abstract class GenerateXtextTask extends AbstractXtextDefaultTask {
                 extension.get().languages,
                 classPath,
                 extension.get().gradleClassLoaderIncludes.get(),
-                extension.get().gradleClassLoaderExcludes.get()
+                extension.get().gradleClassLoaderExcludes.get(),
+                logger
         )
         builder.setBaseDir(extension.get().layout.projectDirectory.asFile.absolutePath)
         builder.setEncoding(encoding.get())
@@ -53,12 +54,12 @@ abstract class GenerateXtextTask extends AbstractXtextDefaultTask {
         builder.setClassPathLookUpFilter(null) // TODO check if this should be configurable
         builder.setSourceDirs(getSourceRootsConfigured())
         builder.setJavaSourceDirs(getJavaSourceRootsConfigured())
-        builder.setFailOnValidationError(true) // TODO check if this should be configurable
+        builder.setFailOnValidationError(failOnValidationError.get())
         // Use build/tmp/<taskName> as scratch space - follows Gradle's convention,
         // cleaned by 'clean', deterministic path, no random suffix
         builder.setTempDir(tempDirectory.get().asFile.tap { it.mkdirs() })
         builder.setDebugLog(logger.isDebugEnabled())
-        //builder.setIncrementalBuild(false) // TODO check if this should be configurable
+        builder.setIncrementalBuild(incrementalBuild.get())
         // TODO check if clusteringConfig should be configurable
         //if (clusteringConfig != null) {
         //    builder.setClusteringConfig(clusteringConfig.convertToStandaloneConfig())
@@ -74,6 +75,7 @@ abstract class GenerateXtextTask extends AbstractXtextDefaultTask {
         if (errorDetected) {
             throw new GradleException("Xtext generation failed due to a severe validation error.")
         }
+        logger.info("Xtext generated {} resource{}.", builder.generatedResourcesCount, builder.generatedResourcesCount == 1 ? '' : 's')
     }
 
     private Iterable<String> getClassPathElementsConfigured() {

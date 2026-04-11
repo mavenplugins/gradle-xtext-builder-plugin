@@ -18,6 +18,7 @@
 
 package io.github.mavenplugins.gradle.xtext.plugin.integrationtest
 
+import org.apache.maven.artifact.versioning.ComparableVersion
 import org.gradle.testkit.runner.BuildResult
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -26,8 +27,6 @@ import static org.assertj.core.api.Assertions.assertThat
 
 class XtextInputOutputDirsTest extends AbstractXtendIntegrationTest {
 
-    final static String XTEXT_VERSION_TESTED = '2.29.0'
-
     @BeforeEach
     @Override
     void setup() {
@@ -35,7 +34,7 @@ class XtextInputOutputDirsTest extends AbstractXtendIntegrationTest {
         rootProject.buildFile << """
 
             xtextBuilder {
-                xtextVersion = '${XTEXT_VERSION_TESTED}'
+                xtextVersion = '${getXtextVersion()}'
                 sourceSets {
                     main {
                         srcDir layout.projectDirectory.dir('src/main/testLanguage')

@@ -20,7 +20,8 @@ package io.github.mavenplugins.gradle.xtext.plugin.builderinterface
 
 import io.github.mavenplugins.gradle.xtext.plugin.dsl.LanguageDSL
 import org.gradle.api.NamedDomainObjectContainer
+import org.gradle.api.logging.Logger
 
 interface IXtextStandaloneBuilderFactory {
-	IXtextStandaloneBuilder get(NamedDomainObjectContainer<LanguageDSL> languageDSLs, URLClassLoader xtextClassLoader)
+	IXtextStandaloneBuilder get(NamedDomainObjectContainer<LanguageDSL> languageDSLs, URLClassLoader xtextClassLoader, Logger logger)
 }

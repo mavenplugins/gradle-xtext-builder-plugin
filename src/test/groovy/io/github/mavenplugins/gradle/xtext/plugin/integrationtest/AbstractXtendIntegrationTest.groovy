@@ -29,21 +29,23 @@ abstract class AbstractXtendIntegrationTest extends AbstractPluginIntegrationTes
     protected CharSequence getXtendDependenciesSnippet() {
         return """
             dependencies {
-                xtextStandalone 'org.eclipse.xtend:org.eclipse.xtend.core'
+                xtextStandalone 'org.eclipse.xtend:org.eclipse.xtend.core:${getXtextVersion()}'
+
+                xtextCompiler 'org.eclipse.xtext:org.eclipse.xtext.xbase.lib:${getXtextVersion()}'
             }
-	    """.stripIndent()
+        """.stripIndent()
     }
 
     protected File createHelloWorld() {
         rootProject.createFile('src/main/java/HelloWorld.xtend', """
-			class HelloWorld {
+            class HelloWorld {
 
-				def void helloWorld() {
-					#['hello', 'world'].forEach[println(toFirstUpper)]
-				}
+                def void helloWorld() {
+                    #['hello', 'world'].forEach[println(toFirstUpper)]
+                }
 
-			}
-		""".stripIndent()
+            }
+        """.stripIndent()
         )
     }
 

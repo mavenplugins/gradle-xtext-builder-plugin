@@ -29,10 +29,12 @@ import org.gradle.api.Action
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.artifacts.Configuration
+import org.gradle.api.artifacts.ModuleDependency
 import org.gradle.api.file.ConfigurableFileCollection
 import org.gradle.api.file.Directory
 import org.gradle.api.logging.Logger
 import org.gradle.api.provider.Provider
+import io.github.mavenplugins.gradle.xtext.plugin.utils.DependencyUtil
 
 @CompileStatic
 class XtextBuilderPlugin implements Plugin<Project> {
@@ -69,7 +71,7 @@ class XtextBuilderPlugin implements Plugin<Project> {
 //        project.plugins.apply("base")
 //        project.plugins.apply(JvmEcosystemPlugin)
         project.extensions.create(XtextBuilderPluginExtension, 'xtextBuilder', XtextBuilderPluginExtension,
-            project.objects, project.layout)
+                project.objects, project.layout)
         xtextStandalone = project.configurations.create(XTEXT_STANDALONE_CONFIGURATION_NAME)
         xtextCompiler = project.configurations.create(XTEXT_COMPILER_CONFIGURATION_NAME)
 
@@ -110,7 +112,7 @@ class XtextBuilderPlugin implements Plugin<Project> {
         def listener = c.getConstructor().newInstance()
         listener.runnable = { ->
             Class.forName('org.jreleaser.gradle.plugin.internal.KordampJReleaserAdapter')
-                .adapt(project)
+                    .adapt(project)
             configureXtextBuilder(project)
         }
 
@@ -118,33 +120,136 @@ class XtextBuilderPlugin implements Plugin<Project> {
         m.addAllProjectsEvaluatedListener(project, listener)
     }
 
+    @CompileDynamic
     private void configureXtextStandaloneConfiguration(Project project) {
         XtextBuilderPluginExtension extension = project.extensions.findByType(XtextBuilderPluginExtension)
         String xtextVersion = extension.xtextVersion.get()
         List<String> xtextStandaloneDependencies =
-        [
-                'org.eclipse.xtext:org.eclipse.xtext.builder.standalone',
-                'org.eclipse.xtext:org.eclipse.xtext.ecore',
-                'org.eclipse.xtext:org.eclipse.xtext.xtext.generator',
-                'org.eclipse.xtext:org.eclipse.xtext.smap',
-                'org.eclipse.emf:org.eclipse.emf.ecore.xmi',
-        ]
+                [
+                        "org.eclipse.xtext:org.eclipse.xtext.builder.standalone:${xtextVersion}", // compile
+                        "org.eclipse.xtext:org.eclipse.xtext.common.types:${xtextVersion}", // compile
+                        "org.eclipse.xtext:org.eclipse.xtext.ecore:${xtextVersion}", // runtime
+                        "org.eclipse.xtext:org.eclipse.xtext:${xtextVersion}", // compile
+                        "org.eclipse.xtext:org.eclipse.xtext.util:${xtextVersion}", // compile
+                        "org.eclipse.xtext:org.eclipse.xtext.xtext.generator:${xtextVersion}", // runtime
+                        "org.eclipse.xtext:org.eclipse.xtext.smap:${xtextVersion}", // runtime
+                        "org.eclipse.xtext:org.eclipse.xtext.xbase.lib:${xtextVersion}", // compile
+                        "org.eclipse.xtext:org.eclipse.xtext.xbase:${xtextVersion}", // test
+                ]
+        xtextStandaloneDependencies.addAll(
+                DependencyUtil.resolveBomManagedDependencies(
+                        "org.eclipse.xtext:xtext-dev-bom:${xtextVersion}",
+                        project.dependencies,
+                        project.configurations,
+                        logger)
+        )
         if (!PluginResourcesUtil.isPluginIntegrationTestRuntime()) {
             // Add this plugin as a dependency if not running in an integration test runtime of this plugin itself.
             String pluginDependencyNotation = "${PluginResourcesUtil.pluginGroupId}:${PluginResourcesUtil.pluginArtifactId}:${PluginResourcesUtil.pluginVersion}"
             xtextStandaloneDependencies.add(pluginDependencyNotation)
         }
-        xtextStandaloneDependencies.each {
-            project.dependencies.add(xtextStandalone.name, it)
+        xtextStandaloneDependencies.each { String notation ->
+            project.dependencies.add(xtextStandalone.name, notation, { ModuleDependency dependency ->
+                logger.info("Adding xtext-dev-bom dependency: ${dependency}")
+                if (dependency.group != 'com.google.inject') {
+                    dependency.transitive = false
+                }
+            })
         }
-        project.dependencies.add(xtextStandalone.name,
-                project.dependencies.enforcedPlatform('org.eclipse.xtext:xtext-dev-bom'))
-        xtextStandalone.resolutionStrategy.eachDependency {
-            if (it.requested.group == 'org.eclipse.xtext' || it.requested.group == 'org.eclipse.xtend') {
-                it.useVersion(xtextVersion)
-            }
-        }
+//        xtextStandalone.resolutionStrategy.eachDependency {
+//            if (it.requested.group == 'org.eclipse.xtext' || it.requested.group == 'org.eclipse.xtend') {
+//                it.useVersion(xtextVersion)
+//            }
+//        }
     }
+
+//    @CompileDynamic
+//    List<String> resolveBomManagedDependencies(Project project, String bomNotation) {
+//        List<String> managedDeps = []
+//
+//        try {
+//            // Create a detached configuration to resolve the BOM POM file
+//            Dependency bomDependency = project.dependencies.create(bomNotation.endsWith('@pom') ? bomNotation : bomNotation + '@pom')
+//            Configuration bomConfig = project.configurations.detachedConfiguration(bomDependency)
+//
+//            // Resolve to get the actual POM file
+//            def bomFiles = bomConfig.resolve()
+//            if (bomFiles.isEmpty()) {
+//                logger.warn("Could not resolve BOM POM file for: ${bomNotation}")
+//                return managedDeps
+//            }
+//
+//            def pomFile = bomFiles.first()
+//            logger.info("Parsing BOM POM file: ${pomFile}")
+//
+//            // Parse the POM XML to extract dependencyManagement section
+//            def pom = new XmlSlurper().parse(pomFile)
+//
+//            // Extract managed dependencies from dependencyManagement section
+//            pom.dependencyManagement.dependencies.dependency.each { dep ->
+//                def group = dep.groupId.text()
+//                def name = dep.artifactId.text()
+//                def version = dep.version.text()
+//
+//                // Resolve property references in version (e.g., ${project.version})
+//                if (version.contains('${')) {
+//                    version = resolveProperty(version, pom)
+//                }
+//
+//                if (group && name && version) {
+//                    String notation = "${group}:${name}:${version}"
+//                    managedDeps.add(notation)
+//                    logger.debug("BOM manages: ${notation}")
+//                }
+//            }
+//
+//            logger.info("Extracted ${managedDeps.size()} managed dependencies from BOM")
+//
+//        } catch (Exception e) {
+//            logger.warn("Failed to parse BOM ${bomNotation}: ${e.message}", e)
+//        }
+//
+//        return managedDeps
+//    }
+//
+//    @CompileDynamic
+//    private String resolveProperty(String value, def pom) {
+//        if (!value.contains('${')) {
+//            return value
+//        }
+//
+//        def result = value
+//
+//        // Common property patterns
+//        def propertyPattern = ~/\$\{([^}]+)\}/
+//        def matcher = propertyPattern.matcher(value)
+//
+//        while (matcher.find()) {
+//            def propertyName = matcher.group(1)
+//            def propertyValue = null
+//
+//            // Check for common properties
+//            if (propertyName == 'project.version' || propertyName == 'pom.version') {
+//                propertyValue = pom.version.text()
+//            } else if (propertyName == 'project.groupId' || propertyName == 'pom.groupId') {
+//                propertyValue = pom.groupId.text()
+//            } else {
+//                // Look in properties section
+//                def propNode = pom.properties."${propertyName}"
+//                if (propNode) {
+//                    propertyValue = propNode.text()
+//                }
+//            }
+//
+//            if (propertyValue) {
+//                result = result.replace("\${${propertyName}}", propertyValue)
+//            } else {
+//                logger.debug("Could not resolve property: ${propertyName}")
+//            }
+//        }
+//
+//        return result
+//    }
 
 //    private void addClasspathToClassloader(Configuration configuration) {
 //        Set<URL> configurationURLs = configuration.files.collect { it.toURI().toURL() } as Set<URL>
@@ -153,13 +258,13 @@ class XtextBuilderPlugin implements Plugin<Project> {
 
     private void registerTasks(Project project) {
         project.tasks.register(GenerateXtextTask.NAME, GenerateXtextTask,
-            new Action<GenerateXtextTask>() {
-                @Override
-                void execute(GenerateXtextTask t) {
-                    t.group = XTEXTBUILDER_GROUP
-                    t.description = 'Generate classes for Xtext languages'
-                }
-            })
+                new Action<GenerateXtextTask>() {
+                    @Override
+                    void execute(GenerateXtextTask t) {
+                        t.group = XTEXTBUILDER_GROUP
+                        t.description = 'Generate classes for Xtext languages'
+                    }
+                })
     }
 
     private void configureTasks(Project project, Configuration xtextStandalone, Configuration xtextLanguages) {
@@ -191,10 +296,11 @@ class XtextBuilderPlugin implements Plugin<Project> {
                         // Collect all outputDirectory values from all outputConfigurations of all languages lazily
                         Provider<List<Directory>> allOutputDirs = project.providers.provider {
                             extension.languages
-                                    .collect { LanguageDSL lang -> lang.outputConfigurations
-                                            .collect { OutputConfigurationDSL oc -> oc.outputDirectory }
-                                            .findAll { it.present }
-                                            .collect { it.get() }
+                                    .collect { LanguageDSL lang ->
+                                        lang.outputConfigurations
+                                                .collect { OutputConfigurationDSL oc -> oc.outputDirectory }
+                                                .findAll { it.present }
+                                                .collect { it.get() }
                                     }
                                     .flatten() as List<Directory>
                         }

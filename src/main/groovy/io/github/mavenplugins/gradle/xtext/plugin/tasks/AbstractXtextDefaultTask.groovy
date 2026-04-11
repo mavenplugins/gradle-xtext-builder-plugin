@@ -67,6 +67,12 @@ abstract class AbstractXtextDefaultTask extends DefaultTask {
     @Input
     final Property<String> compilerTargetLevel
 
+    @Input
+    final Property<Boolean> failOnValidationError
+
+    @Input
+    final Property<Boolean> incrementalBuild
+
     @Inject
     AbstractXtextDefaultTask(ObjectFactory objects) {
         extension = objects.property(XtextBuilderPluginExtension).convention(project.extensions.findByType(XtextBuilderPluginExtension))
@@ -74,6 +80,8 @@ abstract class AbstractXtextDefaultTask extends DefaultTask {
         encoding = objects.property(String).convention(StandardCharsets.UTF_8.name())
         compilerSourceLevel = objects.property(String).convention(extension.get().compilerSourceLevel.get())
         compilerTargetLevel = objects.property(String).convention(extension.get().compilerTargetLevel.get())
+        failOnValidationError = objects.property(Boolean).convention(extension.get().failOnValidationError.get())
+        incrementalBuild = objects.property(Boolean).convention(extension.get().incrementalBuild.get())
     }
 
     @Classpath

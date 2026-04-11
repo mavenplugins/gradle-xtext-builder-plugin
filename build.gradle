@@ -11,7 +11,7 @@ repositories {
 }
 
 dependencies {
-    implementation gradleApi()
+    compileOnly gradleApi()
     implementation localGroovy()
 
     compileOnly "org.eclipse.xtext:org.eclipse.xtext.builder.standalone:$minXtextVersion"
@@ -36,15 +36,90 @@ dependencies {
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
+// Javadoc generation should only include Groovy sources, exclude Java sources and internal packages
 tasks.withType(Javadoc).configureEach {
     exclude '**/*.java'
     exclude '**/internal/**'
 }
 
+// Compile compatibility with Java 8 for both Java and Groovy sources
+// to ensure that the plugin can be used in Gradle builds running on Java 8
+tasks.withType(JavaCompile).configureEach {
+    options.release = "${project.targetCompatibility}".toInteger()
+}
+
+tasks.withType(GroovyCompile).configureEach {
+    options.release = "${project.targetCompatibility}".toInteger()
+    targetCompatibility = JavaVersion.toVersion("${project.targetCompatibility}".toInteger())
+}
+
+// Make the default test task run unit tests and depend on testIntegration
+// This runs both unit tests and integration tests when you execute './gradlew test'
+tasks.named('test') {
+    description = 'Runs unit tests only'
+
+    // Filter by package - run only unit tests in the test task itself
+    include '**/unittest/**'
+
+    doFirst {
+        logger.lifecycle("Running unit tests with Java ${javaLauncher.get().metadata.languageVersion.asInt()} ...")
+    }
+}
+
+// Dedicated test task for integration tests only
+tasks.register('testIntegrationJ8', Test) {
+    description = 'Runs integration tests only with Java 8'
+    group = 'verification'
+
+    // Use the classes and runtime classpath from the default 'test' sourceSet
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = sourceSets.test.runtimeClasspath
+
+    // Integration tests with GradleRunner can use Java 8
+    javaLauncher = javaToolchains.launcherFor {
+        languageVersion = JavaLanguageVersion.of(8)
+    }
+
+    // Filter by package - use glob pattern that matches the directory structure
+    include '**/integrationtest/**'
+
+    systemProperty 'gradle.version', "${project.gradleJ8Version}"
+    systemProperty 'xtext.version', "${project.minXtextVersion}"
+
+    doFirst {
+        logger.lifecycle("Running integration tests with Java ${javaLauncher.get().metadata.languageVersion.asInt()} and Gradle version ${project.gradleJ8Version} ...")
+    }
+}
+
+tasks.register('testIntegrationJ17+', Test) {
+    description = 'Runs integration tests only with Java 17+'
+    group = 'verification'
+
+    // Use the classes and runtime classpath from the default 'test' sourceSet
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = sourceSets.test.runtimeClasspath
+
+    // Filter by package - use glob pattern that matches the directory structure
+    include '**/integrationtest/**'
+
+    // Use default Gradle version
+    //systemProperty 'gradle.version', "${project.gradleJ8Version}"
+    systemProperty 'xtext.version', '2.29.0'
+
+    doFirst {
+        logger.lifecycle("Running integration tests with Java ${javaLauncher.get().metadata.languageVersion.asInt()} ...")
+    }
+}
+
 tasks.withType(Test).configureEach {
     // Using JUnit5 Platform for running tests
     useJUnitPlatform()
+
 }
+
+check.dependsOn 'testIntegrationJ8'
+check.dependsOn 'testIntegrationJ17+'
+
 
 //java {
 //    sourceCompatibility = JavaVersion.VERSION_1_8

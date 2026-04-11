@@ -25,20 +25,29 @@ import io.github.mavenplugins.gradle.xtext.plugin.internal.GradleRuntimeFilterin
 import io.github.mavenplugins.gradle.xtext.plugin.builderinterface.IXtextStandaloneBuilder
 import io.github.mavenplugins.gradle.xtext.plugin.dsl.LanguageDSL
 import io.github.mavenplugins.gradle.xtext.plugin.internal.guava.Preconditions
+import org.eclipse.emf.ecore.resource.Resource
 import org.eclipse.xtext.builder.standalone.ClusteringConfig
 import org.eclipse.xtext.builder.standalone.LanguageAccess
 import org.eclipse.xtext.builder.standalone.LanguageAccessFactory
 import org.eclipse.xtext.builder.standalone.StandaloneBuilder
 import org.eclipse.xtext.builder.standalone.compiler.CompilerConfiguration
 import org.gradle.api.NamedDomainObjectContainer
+import org.gradle.api.logging.Logger
+
+import java.lang.reflect.Method
 
 class XtextStandaloneBuilder implements IXtextStandaloneBuilder {
 
-    private StandaloneBuilder standaloneBuilder
+    private final Logger logger
 
-    XtextStandaloneBuilder() {
+    private GeneratedResourcesCountingStandaloneBuilder standaloneBuilder
+
+    private int generatedResourcesCount = 0
+
+    XtextStandaloneBuilder(Logger logger) {
         Preconditions.checkState(getClass().getClassLoader().getParent() instanceof GradleRuntimeFilteringClassLoader,
                 "${XtextStandaloneBuilder} must be loaded via child classloader of ${GradleRuntimeFilteringClassLoader}")
+        this.logger = logger
     }
 
     @Override
@@ -47,7 +56,7 @@ class XtextStandaloneBuilder implements IXtextStandaloneBuilder {
                 XtextModelUtil.languageConfigurationsFrom(languages),
                 this.getClass().getClassLoader())
         Injector injector = Guice.createInjector(new GradleStandaloneBuilderModule())
-        standaloneBuilder = injector.getInstance(StandaloneBuilder)
+        standaloneBuilder = injector.getInstance(GeneratedResourcesCountingStandaloneBuilder)
         standaloneBuilder.setLanguages(xtextLanguages)
     }
 
@@ -106,6 +115,20 @@ class XtextStandaloneBuilder implements IXtextStandaloneBuilder {
     }
 
     @Override
+    void setIncrementalBuild(final boolean incrementalBuild) {
+        Preconditions.checkNotNull(standaloneBuilder, "setLanguages must be called before setIncrementalBuild")
+        try {
+            Method method = standaloneBuilder.class.getMethod('setIncrementalBuild', boolean.class)
+            method.invoke(standaloneBuilder, incrementalBuild)
+        } catch (NoSuchMethodException e) {
+            // Method doesn't exist in this version of Xtext, warn if it is to be enabled.
+            if (incrementalBuild) {
+                logger.warn("Incremental build is not supported by StandaloneBuilder with the current version of Xtext. Please upgrade to Xtext 2.19.0 or later to enable incremental build.")
+            }
+        }
+    }
+
+    @Override
     void setWriteStorageResources(final boolean writeStorageResources) {
         Preconditions.checkNotNull(standaloneBuilder, "setLanguages must be called before setWriteStorageResources")
         standaloneBuilder.setWriteStorageResources(writeStorageResources)
@@ -136,7 +159,14 @@ class XtextStandaloneBuilder implements IXtextStandaloneBuilder {
     @Override
     boolean launch() {
         Preconditions.checkNotNull(standaloneBuilder, "setLanguages must be called before launch")
-        return standaloneBuilder.launch()
+        boolean isSuccess = standaloneBuilder.launch()
+        generatedResourcesCount = standaloneBuilder.getGeneratedResourcesCount()
+        return isSuccess
+    }
+
+    @Override
+    int getGeneratedResourcesCount() {
+        return generatedResourcesCount
     }
 
     @Override
@@ -148,5 +178,19 @@ class XtextStandaloneBuilder implements IXtextStandaloneBuilder {
             }
         }
         standaloneBuilder = null
+    }
+
+    private static class GeneratedResourcesCountingStandaloneBuilder extends StandaloneBuilder {
+        private int generatedResourcesCount = 0
+
+        @Override
+        protected void generate(final List<Resource> sourceResources) {
+            super.generate(sourceResources)
+            generatedResourcesCount += sourceResources.size()
+        }
+
+        int getGeneratedResourcesCount() {
+            return generatedResourcesCount
+        }
     }
 }

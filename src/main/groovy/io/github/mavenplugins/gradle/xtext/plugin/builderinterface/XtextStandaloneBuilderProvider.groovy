@@ -21,6 +21,7 @@ package io.github.mavenplugins.gradle.xtext.plugin.builderinterface
 import io.github.mavenplugins.gradle.xtext.plugin.dsl.LanguageDSL
 import io.github.mavenplugins.gradle.xtext.plugin.internal.GradleRuntimeFilteringClassLoader
 import org.gradle.api.NamedDomainObjectContainer
+import org.gradle.api.logging.Logger
 
 class XtextStandaloneBuilderProvider {
 
@@ -31,10 +32,14 @@ class XtextStandaloneBuilderProvider {
     }
 
     static IXtextStandaloneBuilder getBuilder(
-            NamedDomainObjectContainer<LanguageDSL> languageDSLs, Set<File> xtextClasspath, List<String> gradleClassLoaderIncludes, List<String> gradleClassLoaderExcludes) {
+            NamedDomainObjectContainer<LanguageDSL> languageDSLs,
+            Set<File> xtextClasspath,
+            List<String> gradleClassLoaderIncludes,
+            List<String> gradleClassLoaderExcludes,
+            Logger logger) {
         synchronized (lock) {
             final URLClassLoader builderClassLoader = getBuilderClassLoader(xtextClasspath, gradleClassLoaderIncludes, gradleClassLoaderExcludes)
-            return createBuilder(languageDSLs, builderClassLoader)
+            return createBuilder(languageDSLs, builderClassLoader, logger)
         }
     }
 
@@ -56,32 +61,19 @@ class XtextStandaloneBuilderProvider {
         } as URL[]
 
         final URLClassLoader urlClassLoader = new URLClassLoader(urls, filteredClassLoader)
-//                {
-//            @Override
-//            protected Class<?> findClass(String name) throws ClassNotFoundException {
-//                final Class<?> clazz = super.findClass(name)
-//                //For debugging purpose only:
-//                //println "###### xtextClassLoader - findClass: '${name}: ${clazz}"
-//                return clazz
-//            }
-//
-//            @Override
-//            URL findResource(String name) {
-//                final URL resource = super.findResource(name)
-//                //For debugging purpose only:
-//                //println "###### xtextClassLoader - findResource: '${name}: ${resource}"
-//                return resource
-//            }
         // For debugging purpose only:
         //logClassLoaderURLs(urlClassLoader, IXtextStandaloneBuilderFactory)
         return urlClassLoader
     }
 
-    private static IXtextStandaloneBuilder createBuilder(NamedDomainObjectContainer<LanguageDSL> languageDSLs, URLClassLoader builderClassLoader) {
+    private static IXtextStandaloneBuilder createBuilder(
+            NamedDomainObjectContainer<LanguageDSL> languageDSLs,
+            URLClassLoader builderClassLoader,
+            Logger logger) {
         ServiceLoader<IXtextStandaloneBuilderFactory> loader = ServiceLoader.load(IXtextStandaloneBuilderFactory.class, builderClassLoader)
         Iterator<IXtextStandaloneBuilderFactory> providers = loader.iterator()
         if (providers.hasNext()) {
-            return providers.next().get(languageDSLs, builderClassLoader)
+            return providers.next().get(languageDSLs, builderClassLoader, logger)
         } else {
             throw new IllegalStateException("No " + IXtextStandaloneBuilderFactory.class.getName() + " found on classpath.")
         }
@@ -97,6 +89,5 @@ class XtextStandaloneBuilderProvider {
         }
         println "====== Class ${className} classLoader URLs[${urls.size()}] - END ======"
     }
-
 }
 

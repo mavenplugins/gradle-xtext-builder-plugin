@@ -33,8 +33,6 @@ import static org.junit.jupiter.api.Assertions.fail
 
 abstract class AbstractGradleBuildTest {
 
-    final static ComparableVersion COMPARABLE_GRADLE_VERSION = new ComparableVersion(System.getProperty("gradle.version", "9.4.1"))
-
     GradleRunner gradleRunner
     ProjectUnderTest rootProject
 
@@ -47,7 +45,7 @@ abstract class AbstractGradleBuildTest {
         rootProject.projectDir = new File(rootProjectDir, rootProject.name)
         rootProject.owner = this
         gradleRunner = GradleRunner.create()
-                .withGradleVersion(COMPARABLE_GRADLE_VERSION.toString())
+                .withGradleVersion(getGradleVersion().toString())
                 .withPluginClasspath()
                 .withProjectDir(rootProject.projectDir) //.forwardOutput()
     }
@@ -83,8 +81,12 @@ abstract class AbstractGradleBuildTest {
             "-Dhttp.connectionTimeout=120000",
             "-Dhttp.socketTimeout=120000",
             "-s",
-            "--warning-mode=fail"
+            isJava8Runtime() ? "--warning-mode=all" : "--warning-mode=fail"
         ]
+    }
+
+    boolean isJava8Runtime() {
+        return System.getProperty('java.version').startsWith('1.8')
     }
 
     void setContent(File file, CharSequence content) {
@@ -144,6 +146,28 @@ abstract class AbstractGradleBuildTest {
     void shouldNotBe(BuildTask task, TaskOutcome outcome) {
         if(task.outcome == outcome) {
             fail("Expected task '${task.path}' not to be ${outcome} but it was.")
+        }
+    }
+
+    ComparableVersion getGradleVersion() {
+        return new ComparableVersion(System.getProperty("gradle.version", "9.4.1"))
+    }
+
+    void logBuildDirectoryFiles() {
+        File buildDir = rootProject.file('build')
+        if (buildDir.exists()) {
+            println "====== Build Directory Files (Recursive) BEGIN ======"
+            buildDir.eachFileRecurse { file ->
+                if (file.isFile()) {
+                    def relativePath = buildDir.toPath().relativize(file.toPath()).toString()
+                    def size = file.size()
+                    def lastModified = new Date(file.lastModified())
+                    println "  ${relativePath} (${size} bytes, modified: ${lastModified})"
+                }
+            }
+            println "====== Build Directory Files (Recursive) END ======"
+        } else {
+            println "Build directory does not exist!"
         }
     }
 
