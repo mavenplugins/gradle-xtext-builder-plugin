@@ -28,9 +28,9 @@ import static org.assertj.core.api.Assertions.assertThat
 class XtextClasspathTest extends AbstractPluginIntegrationTest {
 
     final static int EXPECTED_CLASSPATH_SIZE = 4
-    final static int EXPECTED_STANDALONE_CLASSPATH_SIZE_2_17_1 = 63 + 3 // 3 is coming from integration test build class path directories
-    final static int EXPECTED_STANDALONE_CLASSPATH_SIZE_2_29_0 = 81 + 3 // 3 is coming from integration test build class path directories
-    final static int EXPECTED_STANDALONE_CLASSPATH_SIZE_2_35_0 = 77 + 3 // 3 is coming from integration test build class path directories
+    final static int EXPECTED_STANDALONE_CLASSPATH_SIZE_2_17_1 = 65 + 3 // 3 is coming from integration test build class path directories
+    final static int EXPECTED_STANDALONE_CLASSPATH_SIZE_2_29_0 = 83 + 3 // 3 is coming from integration test build class path directories
+    final static int EXPECTED_STANDALONE_CLASSPATH_SIZE_2_35_0 = 79 + 3 // 3 is coming from integration test build class path directories
 
     @BeforeEach
     @Override

@@ -136,14 +136,16 @@ class XtextBuilderPlugin implements Plugin<Project> {
         List<String> xtextStandaloneDependencies =
                 [
                         "org.eclipse.xtext:org.eclipse.xtext.builder.standalone:${xtextVersion}", // compile
-                        "org.eclipse.xtext:org.eclipse.xtext.common.types:${xtextVersion}", // compile
+                        "org.eclipse.xtext:org.eclipse.xtext.common.types:${xtextVersion}", // compile (transient of org.eclipse.xtext.builder.standalone)
                         "org.eclipse.xtext:org.eclipse.xtext.ecore:${xtextVersion}", // runtime
-                        "org.eclipse.xtext:org.eclipse.xtext:${xtextVersion}", // compile
-                        "org.eclipse.xtext:org.eclipse.xtext.util:${xtextVersion}", // compile
+                        "org.eclipse.xtext:org.eclipse.xtext:${xtextVersion}", // compile (transient of org.eclipse.xtext.common.types)
+                        "org.eclipse.xtext:org.eclipse.xtext.util:${xtextVersion}", // compile (transient of org.eclipse.xtext)
                         "org.eclipse.xtext:org.eclipse.xtext.xtext.generator:${xtextVersion}", // runtime
                         "org.eclipse.xtext:org.eclipse.xtext.smap:${xtextVersion}", // runtime
-                        "org.eclipse.xtext:org.eclipse.xtext.xbase.lib:${xtextVersion}", // compile
-                        "org.eclipse.xtext:org.eclipse.xtext.xbase:${xtextVersion}", // test
+                        "org.eclipse.xtext:org.eclipse.xtext.xbase.lib:${xtextVersion}", // compile (transient of org.eclipse.xtend.lib)
+                        "org.eclipse.xtext:org.eclipse.xtext.xbase:${xtextVersion}", // compile (transient of org.eclipse.xtext.builder.standalone)
+                        "org.eclipse.xtend:org.eclipse.xtend.lib:${xtextVersion}", // compile (transient of org.eclipse.xtext)
+                        "org.eclipse.xtend:org.eclipse.xtend.lib.macro:${xtextVersion}", // compile (transient of org.eclipse.xtend.lib)
                 ]
         xtextStandaloneDependencies.addAll(
                 DependencyUtil.resolveBomManagedDependencies(
