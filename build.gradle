@@ -92,13 +92,18 @@ tasks.register('testIntegrationJ8', Test) {
     }
 }
 
-tasks.register('testIntegrationJ17+', Test) {
-    description = 'Runs integration tests only with Java 17+'
+tasks.register('testIntegrationJ17', Test) {
+    description = 'Runs integration tests only with Java 17'
     group = 'verification'
 
     // Use the classes and runtime classpath from the default 'test' sourceSet
     testClassesDirs = sourceSets.test.output.classesDirs
     classpath = sourceSets.test.runtimeClasspath
+
+    // Integration tests with GradleRunner can use Java 17
+    javaLauncher = javaToolchains.launcherFor {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
 
     // Filter by package - use glob pattern that matches the directory structure
     include '**/integrationtest/**'
@@ -112,6 +117,31 @@ tasks.register('testIntegrationJ17+', Test) {
     }
 }
 
+tasks.register('testIntegrationJ21', Test) {
+    description = 'Runs integration tests only with Java 21'
+    group = 'verification'
+
+    // Use the classes and runtime classpath from the default 'test' sourceSet
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = sourceSets.test.runtimeClasspath
+
+    // Integration tests with GradleRunner can use Java 21
+    javaLauncher = javaToolchains.launcherFor {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+
+    // Filter by package - use glob pattern that matches the directory structure
+    include '**/integrationtest/**'
+
+    // Use default Gradle version
+    //systemProperty 'gradle.version', "${project.gradleJ8Version}"
+    systemProperty 'xtext.version', '2.35.0'
+
+    doFirst {
+        logger.lifecycle("Running integration tests with Java ${javaLauncher.get().metadata.languageVersion.asInt()} ...")
+    }
+}
+
 tasks.withType(Test).configureEach {
     // Using JUnit5 Platform for running tests
     useJUnitPlatform()
@@ -119,7 +149,8 @@ tasks.withType(Test).configureEach {
 }
 
 check.dependsOn 'testIntegrationJ8'
-check.dependsOn 'testIntegrationJ17+'
+check.dependsOn 'testIntegrationJ17'
+check.dependsOn 'testIntegrationJ21'
 
 
 //java {

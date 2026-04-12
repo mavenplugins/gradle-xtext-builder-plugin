@@ -26,6 +26,7 @@ import org.apache.maven.artifact.versioning.ComparableVersion
 import org.gradle.api.Action
 import org.gradle.api.GradleException
 import org.gradle.api.NamedDomainObjectContainer
+import org.gradle.api.attributes.java.TargetJvmEnvironment
 import org.gradle.api.file.ProjectLayout
 import org.gradle.api.model.ObjectFactory
 import org.gradle.api.provider.ListProperty
@@ -85,6 +86,9 @@ abstract class XtextBuilderPluginExtension {
     final Property<String> compilerTargetLevel
 
     @Input
+    final Property<String> targetJvmEnvironment
+
+    @Input
     final Property<Boolean> failOnValidationError
 
     @Input
@@ -98,6 +102,7 @@ abstract class XtextBuilderPluginExtension {
         gradleClassLoaderExcludes = objects.listProperty(String).convention(getDefaultGradleClassLoaderExcludes())
         compilerSourceLevel = objects.property(String).convention(PluginResourcesUtil.defaultCompilerSourceLevel)
         compilerTargetLevel = objects.property(String).convention(PluginResourcesUtil.defaultCompilerTargetLevel)
+        targetJvmEnvironment = objects.property(String).convention(TargetJvmEnvironment.STANDARD_JVM)
         failOnValidationError = objects.property(Boolean).convention(true)
         incrementalBuild = objects.property(Boolean).convention(false)
     }

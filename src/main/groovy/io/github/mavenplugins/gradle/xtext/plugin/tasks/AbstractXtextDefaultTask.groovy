@@ -133,6 +133,7 @@ abstract class AbstractXtextDefaultTask extends DefaultTask {
                     "Xtext Encoding: " + (!encoding.present ? "not set. Encoding provider will be used." : encoding.get()));
             logger.info("Xtext Compiler source level: " + compilerSourceLevel.get());
             logger.info("Xtext Compiler target level: " + compilerTargetLevel.get());
+            logger.info("Xtext JVM target environment: " + extension.get().targetJvmEnvironment.get());
         }
     }
 

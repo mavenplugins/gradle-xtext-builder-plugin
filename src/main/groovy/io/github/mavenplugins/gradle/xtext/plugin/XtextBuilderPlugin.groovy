@@ -30,6 +30,7 @@ import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.artifacts.ModuleDependency
+import org.gradle.api.attributes.java.TargetJvmEnvironment
 import org.gradle.api.file.ConfigurableFileCollection
 import org.gradle.api.file.Directory
 import org.gradle.api.logging.Logger
@@ -74,18 +75,17 @@ class XtextBuilderPlugin implements Plugin<Project> {
                 project.objects, project.layout)
         xtextStandalone = project.configurations.create(XTEXT_STANDALONE_CONFIGURATION_NAME)
         xtextCompiler = project.configurations.create(XTEXT_COMPILER_CONFIGURATION_NAME)
-
         registerTasks(project)
 
         project.afterEvaluate(new Action<Project>() {
             @Override
             void execute(Project p) {
                 XtextBuilderPluginExtension extension = p.extensions.findByType(XtextBuilderPluginExtension)
+
                 //if (!extension.enabled.get()) return
                 extension.validate()
 
-                configureXtextStandaloneConfiguration(p)
-                //addClasspathToClassloader(xtextStandalone)
+                configureXtextConfigurations(p, extension)
 
                 if (hasKordampBasePluginApplied(p)) {
                     registerAllProjectsEvaluatedListener(p)
@@ -94,6 +94,16 @@ class XtextBuilderPlugin implements Plugin<Project> {
                 }
             }
         })
+    }
+
+    private void configureXtextConfigurations(Project project, XtextBuilderPluginExtension extension) {
+        // Enable configurations to resolve dependency variants - like e.g. guava
+        String targetJvmEnvironment = extension.targetJvmEnvironment.get()
+        xtextStandalone.attributes.attribute(TargetJvmEnvironment.TARGET_JVM_ENVIRONMENT_ATTRIBUTE,
+                project.objects.named(TargetJvmEnvironment, targetJvmEnvironment))
+        xtextCompiler.attributes.attribute(TargetJvmEnvironment.TARGET_JVM_ENVIRONMENT_ATTRIBUTE,
+                project.objects.named(TargetJvmEnvironment, targetJvmEnvironment))
+        configureXtextStandaloneConfiguration(project, extension)
     }
 
     private void configureXtextBuilder(Project project) {
@@ -121,8 +131,7 @@ class XtextBuilderPlugin implements Plugin<Project> {
     }
 
     @CompileDynamic
-    private void configureXtextStandaloneConfiguration(Project project) {
-        XtextBuilderPluginExtension extension = project.extensions.findByType(XtextBuilderPluginExtension)
+    private void configureXtextStandaloneConfiguration(Project project, XtextBuilderPluginExtension extension) {
         String xtextVersion = extension.xtextVersion.get()
         List<String> xtextStandaloneDependencies =
                 [
