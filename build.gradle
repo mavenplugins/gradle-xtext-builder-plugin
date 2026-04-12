@@ -86,8 +86,9 @@ tasks.register('testIntegrationJ8', Test) {
     systemProperty 'gradle.version', "${project.gradleJ8Version}"
     systemProperty 'xtext.version', "${project.minXtextVersion}"
 
+    String gradleJ8Version = project.gradleJ8Version
     doFirst {
-        logger.lifecycle("Running integration tests with Java ${javaLauncher.get().metadata.languageVersion.asInt()} and Gradle version ${project.gradleJ8Version} ...")
+        logger.lifecycle("Running integration tests with Java ${javaLauncher.get().metadata.languageVersion.asInt()} and Gradle version ${gradleJ8Version} ...")
     }
 }
 

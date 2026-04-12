@@ -78,10 +78,10 @@ abstract class AbstractGradleBuildTest {
 
     private String[] getDefaultArguments() {
         [
-            "-Dhttp.connectionTimeout=120000",
-            "-Dhttp.socketTimeout=120000",
-            "-s",
-            isJava8Runtime() ? "--warning-mode=all" : "--warning-mode=fail"
+                "-Dhttp.connectionTimeout=120000",
+                "-Dhttp.socketTimeout=120000",
+                "-s",
+                "--warning-mode=fail"
         ]
     }
 
@@ -96,7 +96,7 @@ abstract class AbstractGradleBuildTest {
     }
 
     void append(File file, CharSequence content) {
-        if(file.exists) {
+        if (file.exists) {
             file << content.toString()
         } else {
             setContent(file, content)
@@ -112,14 +112,14 @@ abstract class AbstractGradleBuildTest {
     }
 
     void shouldExist(File file) {
-        if(!file.exists()) {
+        if (!file.exists()) {
             String relativePath = rootProject.projectDir.toURI().relativize(file.path).path
             fail("File '${relativePath}' should exist but it does not.")
         }
     }
 
     void shouldNotExist(File file) {
-        if(file.exists()) {
+        if (file.exists()) {
             String relativePath = rootProject.projectDir.toPath().relativize(file.toPath())
             fail("File '${relativePath}' should not exist but it does.")
         }
@@ -134,7 +134,7 @@ abstract class AbstractGradleBuildTest {
     }
 
     void shouldBe(BuildTask task, TaskOutcome outcome) {
-        if(task.outcome != outcome) {
+        if (task.outcome != outcome) {
             fail("Expected task '${task.path}' to be ${outcome} but was: <${task.outcome}>")
         }
     }
@@ -144,7 +144,7 @@ abstract class AbstractGradleBuildTest {
     }
 
     void shouldNotBe(BuildTask task, TaskOutcome outcome) {
-        if(task.outcome == outcome) {
+        if (task.outcome == outcome) {
             fail("Expected task '${task.path}' not to be ${outcome} but it was.")
         }
     }
@@ -218,7 +218,7 @@ abstract class AbstractGradleBuildTest {
         }
 
         def String getPath() {
-            if(parent === null) {
+            if (parent === null) {
                 return ""
             } else {
                 return "${parent.path}:${name}"
