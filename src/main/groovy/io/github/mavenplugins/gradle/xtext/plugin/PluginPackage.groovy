@@ -19,6 +19,9 @@
 package io.github.mavenplugins.gradle.xtext.plugin
 
 final class PluginPackage {
+
+    static final String PACKAGE_NAME = PluginPackage.class.getPackage().getName()
+
     private PluginPackage() {
         // prevent instantiation
     }

@@ -75,7 +75,7 @@ class XtextStandaloneBuilderProvider {
         if (providers.hasNext()) {
             return providers.next().get(languageDSLs, builderClassLoader, logger)
         } else {
-            throw new IllegalStateException("No " + IXtextStandaloneBuilderFactory.class.getName() + " found on classpath.")
+            throw new IllegalStateException("No providers for " + IXtextStandaloneBuilderFactory.class.getName() + " found on classpath.")
         }
     }
 

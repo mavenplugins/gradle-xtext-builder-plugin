@@ -49,7 +49,7 @@ abstract class XtextBuilderPluginExtension {
             'org.codehaus.groovy',
             'org.gradle',
             'org.slf4j',
-            PluginPackage.class.getPackage().getName()
+            PluginPackage.PACKAGE_NAME
     ]
     List<String> getDefaultGradleClassLoaderIncludes() {
         return defaultGradleClassLoaderIncludes.asImmutable()

@@ -41,41 +41,45 @@ abstract class GenerateXtextTask extends AbstractXtextDefaultTask {
     void performAction() {
         super.performAction()
         Set<File> classPath = new LinkedHashSet(xtextStandaloneClasspath.files)
-        IXtextStandaloneBuilder builder = XtextStandaloneBuilderProvider.getBuilder(
+        final IXtextStandaloneBuilder builder = XtextStandaloneBuilderProvider.getBuilder(
                 extension.get().languages,
                 classPath,
                 extension.get().gradleClassLoaderIncludes.get(),
                 extension.get().gradleClassLoaderExcludes.get(),
                 logger
         )
-        builder.setBaseDir(extension.get().layout.projectDirectory.asFile.absolutePath)
-        builder.setEncoding(encoding.get())
-        builder.setClassPathEntries(getClassPathElementsConfigured())
-        builder.setClassPathLookUpFilter(null) // TODO check if this should be configurable
-        builder.setSourceDirs(getSourceRootsConfigured())
-        builder.setJavaSourceDirs(getJavaSourceRootsConfigured())
-        builder.setFailOnValidationError(failOnValidationError.get())
-        // Use build/tmp/<taskName> as scratch space - follows Gradle's convention,
-        // cleaned by 'clean', deterministic path, no random suffix
-        builder.setTempDir(tempDirectory.get().asFile.tap { it.mkdirs() })
-        builder.setDebugLog(logger.isDebugEnabled())
-        builder.setIncrementalBuild(incrementalBuild.get())
-        // TODO check if clusteringConfig should be configurable
-        //if (clusteringConfig != null) {
-        //    builder.setClusteringConfig(clusteringConfig.convertToStandaloneConfig())
-        //}
-        builder.configureCompiler(
-                compilerSourceLevel.get(),
-                compilerTargetLevel.get(),
-                logger.isDebugEnabled(),
-                false, // compilerSkipAnnotationProcessing TODO check if this should be configurable
-                false  // compilerPreserveInformationAboutFormalParameters TODO check if this should be configurable
-        )
-        boolean errorDetected = !builder.launch()
-        if (errorDetected) {
-            throw new GradleException("Xtext generation failed due to a severe validation error.")
+        try {
+            builder.setBaseDir(extension.get().layout.projectDirectory.asFile.absolutePath)
+            builder.setEncoding(encoding.get())
+            builder.setClassPathEntries(getClassPathElementsConfigured())
+            builder.setClassPathLookUpFilter(null) // TODO check if this should be configurable
+            builder.setSourceDirs(getSourceRootsConfigured())
+            builder.setJavaSourceDirs(getJavaSourceRootsConfigured())
+            builder.setFailOnValidationError(failOnValidationError.get())
+            // Use build/tmp/<taskName> as scratch space - follows Gradle's convention,
+            // cleaned by 'clean', deterministic path, no random suffix
+            builder.setTempDir(tempDirectory.get().asFile.tap { it.mkdirs() })
+            builder.setDebugLog(logger.isDebugEnabled())
+            builder.setIncrementalBuild(incrementalBuild.get())
+            // TODO check if clusteringConfig should be configurable
+            //if (clusteringConfig != null) {
+            //    builder.setClusteringConfig(clusteringConfig.convertToStandaloneConfig())
+            //}
+            builder.configureCompiler(
+                    compilerSourceLevel.get(),
+                    compilerTargetLevel.get(),
+                    logger.isDebugEnabled(),
+                    false, // compilerSkipAnnotationProcessing TODO check if this should be configurable
+                    false  // compilerPreserveInformationAboutFormalParameters TODO check if this should be configurable
+            )
+            boolean errorDetected = !builder.launch()
+            if (errorDetected) {
+                throw new GradleException("Xtext generation failed due to a severe validation error.")
+            }
+            logger.info("Xtext generated {} resource{}.", builder.generatedResourcesCount, builder.generatedResourcesCount == 1 ? '' : 's')
+        } finally {
+            builder.close()
         }
-        logger.info("Xtext generated {} resource{}.", builder.generatedResourcesCount, builder.generatedResourcesCount == 1 ? '' : 's')
     }
 
     private Iterable<String> getClassPathElementsConfigured() {
