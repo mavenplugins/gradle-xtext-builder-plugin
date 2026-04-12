@@ -68,7 +68,7 @@ tasks.named('test') {
 }
 
 // Dedicated test task for integration tests only
-tasks.register('testIntegrationJ8', Test) {
+tasks.register('testIntegration_010_J8', Test) {
     description = 'Runs integration tests only with Java 8'
     group = 'verification'
 
@@ -93,7 +93,7 @@ tasks.register('testIntegrationJ8', Test) {
     }
 }
 
-tasks.register('testIntegrationJ17', Test) {
+tasks.register('testIntegration_020_J17', Test) {
     description = 'Runs integration tests only with Java 17'
     group = 'verification'
 
@@ -118,7 +118,7 @@ tasks.register('testIntegrationJ17', Test) {
     }
 }
 
-tasks.register('testIntegrationJ21', Test) {
+tasks.register('testIntegration_030_J21', Test) {
     description = 'Runs integration tests only with Java 21'
     group = 'verification'
 
@@ -149,9 +149,9 @@ tasks.withType(Test).configureEach {
 
 }
 
-check.dependsOn 'testIntegrationJ8'
-check.dependsOn 'testIntegrationJ17'
-check.dependsOn 'testIntegrationJ21'
+check.dependsOn 'testIntegration_010_J8'
+check.dependsOn 'testIntegration_020_J17'
+check.dependsOn 'testIntegration_030_J21'
 
 
 //java {
