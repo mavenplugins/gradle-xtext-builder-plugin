@@ -71,6 +71,7 @@ jobs:
           java-version: |
                         8
                         17
+                        21
           distribution: zulu
           cache: gradle
 
