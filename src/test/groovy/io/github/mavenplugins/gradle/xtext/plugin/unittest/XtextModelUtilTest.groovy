@@ -18,9 +18,9 @@
 
 package io.github.mavenplugins.gradle.xtext.plugin.unittest
 
+import io.github.mavenplugins.gradle.xtext.builder.utils.XtextModelUtil
 import io.github.mavenplugins.gradle.xtext.plugin.dsl.LanguageDSL
 import io.github.mavenplugins.gradle.xtext.plugin.dsl.OutputConfigurationDSL
-import io.github.mavenplugins.gradle.xtext.builder.utils.XtextModelUtil
 import org.eclipse.xtext.builder.standalone.ILanguageConfiguration
 import org.eclipse.xtext.generator.OutputConfiguration
 import org.gradle.api.NamedDomainObjectContainer

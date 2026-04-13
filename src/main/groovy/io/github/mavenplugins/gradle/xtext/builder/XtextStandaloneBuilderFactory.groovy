@@ -18,10 +18,10 @@
 
 package io.github.mavenplugins.gradle.xtext.builder
 
-import io.github.mavenplugins.gradle.xtext.plugin.internal.GradleRuntimeFilteringClassLoader
 import io.github.mavenplugins.gradle.xtext.plugin.builderinterface.IXtextStandaloneBuilder
 import io.github.mavenplugins.gradle.xtext.plugin.builderinterface.IXtextStandaloneBuilderFactory
 import io.github.mavenplugins.gradle.xtext.plugin.dsl.LanguageDSL
+import io.github.mavenplugins.gradle.xtext.plugin.internal.GradleRuntimeFilteringClassLoader
 import io.github.mavenplugins.gradle.xtext.plugin.internal.guava.Preconditions
 import org.gradle.api.NamedDomainObjectContainer
 import org.gradle.api.logging.Logger

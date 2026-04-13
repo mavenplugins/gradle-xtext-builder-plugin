@@ -24,6 +24,7 @@ import io.github.mavenplugins.gradle.xtext.plugin.dsl.LanguageDSL
 import io.github.mavenplugins.gradle.xtext.plugin.dsl.OutputConfigurationDSL
 import io.github.mavenplugins.gradle.xtext.plugin.dsl.SourceSetDSL
 import io.github.mavenplugins.gradle.xtext.plugin.tasks.GenerateXtextTask
+import io.github.mavenplugins.gradle.xtext.plugin.utils.DependencyUtil
 import io.github.mavenplugins.gradle.xtext.plugin.utils.PluginResourcesUtil
 import org.gradle.api.Action
 import org.gradle.api.Plugin
@@ -35,7 +36,6 @@ import org.gradle.api.file.ConfigurableFileCollection
 import org.gradle.api.file.Directory
 import org.gradle.api.logging.Logger
 import org.gradle.api.provider.Provider
-import io.github.mavenplugins.gradle.xtext.plugin.utils.DependencyUtil
 
 @CompileStatic
 class XtextBuilderPlugin implements Plugin<Project> {
@@ -60,7 +60,7 @@ class XtextBuilderPlugin implements Plugin<Project> {
 //        }
         if (project.pluginManager.hasPlugin('org.xtext.builder') || project.pluginManager.hasPlugin('org.xtext.xtend')) {
             throw new IllegalStateException("The 'org.xtext.builder' or 'org.xtext.xtend' plugin cannot be applied together with the '${PluginResourcesUtil.pluginId}' plugin. " +
-                    "A project must either use either 'org.xtext.builder' or '${PluginResourcesUtil.pluginId}' but cannot use both at the same time.");
+                    "A project must either use either 'org.xtext.builder' or '${PluginResourcesUtil.pluginId}' but cannot use both at the same time.")
         }
 
         // TODO - check if needed
@@ -187,49 +187,45 @@ class XtextBuilderPlugin implements Plugin<Project> {
 
     private void configureTasks(Project project, Configuration xtextStandalone, Configuration xtextLanguages) {
         XtextBuilderPluginExtension extension = project.extensions.findByType(XtextBuilderPluginExtension)
-        project.tasks.withType(GenerateXtextTask,
-                new Action<GenerateXtextTask>() {
-                    @Override
-                    void execute(GenerateXtextTask t) {
-                        t.xtextStandaloneClasspath.from(xtextStandalone)
-                        if (PluginResourcesUtil.isPluginIntegrationTestRuntime()) {
-                            logger.info("###### Plugin integration test runtime determined.")
-                            addProjectBuildClassPathsIfIntegrationTestRuntime(t.xtextStandaloneClasspath)
+        project.tasks.withType(GenerateXtextTask).configureEach { GenerateXtextTask t ->
+            t.xtextStandaloneClasspath.from(xtextStandalone)
+            if (PluginResourcesUtil.isPluginIntegrationTestRuntime()) {
+                logger.info("###### Plugin integration test runtime determined.")
+                addProjectBuildClassPathsIfIntegrationTestRuntime(t.xtextStandaloneClasspath)
+            }
+            t.xtextCompilerClasspath.from(xtextLanguages)
+            // Collect all Java srcDirs from all SourceSetDSL entries lazily
+            Provider<List<Directory>> allJavaSrcDirs = project.providers.provider {
+                extension.javaSourceSets
+                        .collect { SourceSetDSL sourceSet -> sourceSet.srcDirs.get() }
+                        .flatten() as List<Directory>
+            }
+            t.javaSourceDirectories.from(allJavaSrcDirs)
+            // Collect all Xtext srcDirs from all SourceSetDSL entries lazily
+            Provider<List<Directory>> allXtextSrcDirs = project.providers.provider {
+                extension.sourceSets
+                        .collect { SourceSetDSL sourceSet -> sourceSet.srcDirs.get() }
+                        .flatten() as List<Directory>
+            }
+            t.xtextSourceDirectories.from(allXtextSrcDirs)
+            // Collect all outputDirectory values from all outputConfigurations of all languages lazily
+            Provider<List<Directory>> allOutputDirs = project.providers.provider {
+                extension.languages
+                        .collect { LanguageDSL lang ->
+                            lang.outputConfigurations
+                                    .collect { OutputConfigurationDSL oc -> oc.outputDirectory }
+                                    .findAll { it.present }
+                                    .collect { it.get() }
                         }
-                        t.xtextCompilerClasspath.from(xtextLanguages)
-                        // Collect all Java srcDirs from all SourceSetDSL entries lazily
-                        Provider<List<Directory>> allJavaSrcDirs = project.providers.provider {
-                            extension.javaSourceSets
-                                    .collect { SourceSetDSL sourceSet -> sourceSet.srcDirs.get() }
-                                    .flatten() as List<Directory>
-                        }
-                        t.javaSourceDirectories.from(allJavaSrcDirs)
-                        // Collect all Xtext srcDirs from all SourceSetDSL entries lazily
-                        Provider<List<Directory>> allXtextSrcDirs = project.providers.provider {
-                            extension.sourceSets
-                                    .collect { SourceSetDSL sourceSet -> sourceSet.srcDirs.get() }
-                                    .flatten() as List<Directory>
-                        }
-                        t.xtextSourceDirectories.from(allXtextSrcDirs)
-                        // Collect all outputDirectory values from all outputConfigurations of all languages lazily
-                        Provider<List<Directory>> allOutputDirs = project.providers.provider {
-                            extension.languages
-                                    .collect { LanguageDSL lang ->
-                                        lang.outputConfigurations
-                                                .collect { OutputConfigurationDSL oc -> oc.outputDirectory }
-                                                .findAll { it.present }
-                                                .collect { it.get() }
-                                    }
-                                    .flatten() as List<Directory>
-                        }
-                        t.xtextOutputDirectories.from(allOutputDirs)
-                        // Scratch space: build/tmp/<taskName> - follows Gradle's own convention,
-                        // cleaned by 'clean', unique per task, no random suffix
-                        t.tempDirectory.convention(
-                                project.layout.buildDirectory.dir("tmp/${t.NAME}")
-                        )
-                    }
-                })
+                        .flatten() as List<Directory>
+            }
+            t.xtextOutputDirectories.from(allOutputDirs)
+            // Scratch space: build/tmp/<taskName> - follows Gradle's own convention,
+            // cleaned by 'clean', unique per task, no random suffix
+            t.tempDirectory.convention(
+                    project.layout.buildDirectory.dir("tmp/${t.NAME}")
+            )
+        }
     }
 
     private void addProjectBuildClassPathsIfIntegrationTestRuntime(ConfigurableFileCollection classPath) {

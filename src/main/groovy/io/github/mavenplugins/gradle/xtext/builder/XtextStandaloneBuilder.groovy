@@ -21,9 +21,9 @@ package io.github.mavenplugins.gradle.xtext.builder
 import com.google.inject.Guice
 import com.google.inject.Injector
 import io.github.mavenplugins.gradle.xtext.builder.utils.XtextModelUtil
-import io.github.mavenplugins.gradle.xtext.plugin.internal.GradleRuntimeFilteringClassLoader
 import io.github.mavenplugins.gradle.xtext.plugin.builderinterface.IXtextStandaloneBuilder
 import io.github.mavenplugins.gradle.xtext.plugin.dsl.LanguageDSL
+import io.github.mavenplugins.gradle.xtext.plugin.internal.GradleRuntimeFilteringClassLoader
 import io.github.mavenplugins.gradle.xtext.plugin.internal.guava.Preconditions
 import org.eclipse.emf.ecore.resource.Resource
 import org.eclipse.xtext.builder.standalone.ClusteringConfig

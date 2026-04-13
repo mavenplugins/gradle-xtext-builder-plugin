@@ -21,7 +21,6 @@ package io.github.mavenplugins.gradle.xtext.plugin.utils
 import groovy.transform.CompileDynamic
 import groovy.xml.XmlSlurper
 import groovy.xml.slurpersupport.GPathResult
-import org.gradle.api.Project
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.artifacts.ConfigurationContainer
 import org.gradle.api.artifacts.Dependency
@@ -102,7 +101,7 @@ class DependencyUtil {
         String result = value
 
         // Common property patterns
-        Pattern propertyPattern = ~/\$\{([^}]+)\}/
+        Pattern propertyPattern = ~/\$\{([^}]+)}/
         Matcher matcher = propertyPattern.matcher(value)
 
         while (matcher.find()) {

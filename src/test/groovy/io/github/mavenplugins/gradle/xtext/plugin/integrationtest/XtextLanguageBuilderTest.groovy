@@ -18,7 +18,7 @@
 
 package io.github.mavenplugins.gradle.xtext.plugin.integrationtest
 
-import org.apache.maven.artifact.versioning.ComparableVersion
+
 import org.gradle.testkit.runner.BuildResult
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test

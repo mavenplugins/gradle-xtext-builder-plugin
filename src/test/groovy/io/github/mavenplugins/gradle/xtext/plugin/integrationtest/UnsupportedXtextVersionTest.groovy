@@ -22,6 +22,7 @@ import org.apache.maven.artifact.versioning.ComparableVersion
 import org.gradle.testkit.runner.BuildResult
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+
 import static org.assertj.core.api.Assertions.assertThat
 
 class UnsupportedXtextVersionTest extends AbstractPluginIntegrationTest {
