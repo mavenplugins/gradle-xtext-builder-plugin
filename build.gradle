@@ -1,7 +1,8 @@
 plugins {
     id 'groovy'
     id 'maven-publish'
-    //id 'java-gradle-plugin'
+    id 'signing'
+    //id 'java-gradle-plugin' // implied by 'com.gradle.plugin-publish'
     id 'com.gradle.plugin-publish' version "$publishPluginVersion" // implies 'java-gradle-plugin'
     id 'org.jreleaser' version "$jreleaserPluginVersion"
 }
@@ -172,6 +173,9 @@ processResources {
 // Logger var for usage within other definition scopes
 Logger projectLogger = project.logger
 
+boolean isSnapshotVersion = version.endsWith('-SNAPSHOT')
+projectLogger.lifecycle('> {} build', isSnapshotVersion ? 'SNAPSHOT' : 'Release')
+
 // Unused variable for potential future use in conditional logic (e.g. jreleaser release configuration)
 //boolean isReleaseBuild = !project.version.endsWith("-SNAPSHOT")
 
@@ -221,8 +225,20 @@ gradlePlugin {
 }
 
 
-boolean isSnapshotVersion = version.endsWith('-SNAPSHOT')
-logger.lifecycle('###### isSnapshotVersion: {}', isSnapshotVersion)
+signing {
+    required = {
+        isSnapshotVersion // signing of release version will be done by jreleaser
+                && gradle.taskGraph.hasTask('publish')
+                && System.getenv('JRELEASER_GPG_SECRET_KEY')
+                && System.getenv('JRELEASER_GPG_PASSPHRASE')
+    }
+    useInMemoryPgpKeys(
+            System.getenv('JRELEASER_GPG_SECRET_KEY'),
+            System.getenv('JRELEASER_GPG_PASSPHRASE')
+    )
+}
+
+
 publishing {
     // Enhance all publications with metadata for Maven Central
     // (e.g. pluginMaven, mavenSettingsPluginMarkerMaven, and any custom publications)
@@ -233,7 +249,7 @@ publishing {
             // from components.java
             withType(MavenPublication) {
                 // Enhance/update metadata to all publications (including mavenPlugin publication created by java-gradle-plugin)
-                projectLogger.info("###### Common customization of publication ${it.name} ...")
+                projectLogger.lifecycle("> Common custom configuration of publication {} ...", it.name)
                 pom {
                     name = "${pluginDisplayName}"
                     description = "${pluginDescription}"
@@ -263,7 +279,7 @@ publishing {
             } // end of withType(MavenPublication)
             pluginMaven {
                 // Customize plugin .jar related publication here
-                projectLogger.info("###### Specific customization of publication ${name} ...")
+                projectLogger.lifecycle("> Custom configuration of publication {} ...", name)
                 pom {
                     name = "${pluginDisplayName} (plugin jar artifact)"
                 }
@@ -271,7 +287,7 @@ publishing {
             // <plugin name from gradlePlugin.plugins configuration>PluginMarkerMaven
             xtextBuilderPluginMarkerMaven {
                 // Customize marker publication of plugin here
-                projectLogger.info("###### Specific customization of publication ${name} ...")
+                projectLogger.lifecycle("> Custom configuration of publication {} ...", name)
                 pom {
                     //name = "${pluginDisplayName} (${((String) name).replace('PluginMarkerMaven', '')} marker artifact)"
                     name = "${pluginDisplayName}"
