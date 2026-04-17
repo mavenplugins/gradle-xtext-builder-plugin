@@ -8,6 +8,7 @@ on:
         required: false
         type: boolean
         description: "Check version calculation only."
+        default: true
       jreleaserDryRun:
         required: false
         type: boolean
@@ -20,6 +21,7 @@ on:
         required: false
         type: boolean
         description: "Automatically publish the staged artifacts to MavenCentral after upload."
+        default: true
 #      version:
 #        description: 'Release version'
 #        required: true
@@ -66,12 +68,15 @@ jobs:
 
       - name: Log Environment
         run: |
-          echo "  github.event_name:      ${{ github.event_name }}"
-          echo "  github.ref:             ${{ github.ref }}"
-          echo "  workdir:                $(pwd)"
-          echo "  homedir:                ${HOME}"
-          echo "  inputs.runner:          ${{ inputs.runner }}"
-          echo "  inputs.autoPublish:     ${{ inputs.autoPublish }}"
+          echo "  github.event_name:           ${{ github.event_name }}"
+          echo "  github.ref:                  ${{ github.ref }}"
+          echo "  workdir:                     $(pwd)"
+          echo "  homedir:                     ${HOME}"
+          echo "  inputs.runner:               ${{ inputs.runner }}"
+          echo "  inputs.checkVersioningOnly:  ${{ inputs.checkVersioningOnly }}"
+          echo "  inputs.jreleaserDryRun:      ${{ inputs.jreleaserDryRun }}"
+          echo "  inputs.gradleWarnAll:        ${{ inputs.gradleWarnAll }}"
+          echo "  inputs.autoPublish:          ${{ inputs.autoPublish }}"
           echo "  env.OPT_JRELEASER_DRY_RUN:   ${{ env.OPT_JRELEASER_DRY_RUN }}"
           echo "  env.OPT_GRADLE_CLI_WARN_ALL: ${{ env.OPT_GRADLE_CLI_WARN_ALL }}"
           echo "  env.OPT_JRELEASER_MAVENCENTRAL_STAGE: ${{ env.OPT_JRELEASER_MAVENCENTRAL_STAGE }}"
@@ -79,15 +84,20 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v6
         with:
-        #    fetch-depth: 0
+          #fetch-depth: 0
+          persist-credentials: true
           token: ${{ secrets.SERVICE_USER_PAT }}
+
+      - name: Ensure util scripts are executable
+        run: |
+          chmod +x .github/workflows/utils/*.sh
 
       - name: Calculate versions
         id: versions
         shell: bash
         run: |
           # Extract the version from gradle.properties, removing any trailing whitespace
-          CURRENT_VERSION=$(sed -rn 's/^( *version *= *)([a-zA-Z0-9.-]*) *.*$/\2/p' gradle.properties)
+          CURRENT_VERSION=$(sed -n -r 's/^( *version *= *)([a-zA-Z0-9.-]*) *.*$/\2/p' gradle.properties)
           if [[ ! "${CURRENT_VERSION}" == *-SNAPSHOT ]]; then
             echo "ERROR: Current version '${CURRENT_VERSION}' is not a SNAPSHOT version."
             exit 1
@@ -95,7 +105,7 @@ jobs:
           RELEASE_VERSION="${CURRENT_VERSION%*-SNAPSHOT}"
           NEXT_VERSION="$(./.github/workflows/utils/next_version.sh ${RELEASE_VERSION})"
           if [[ -z "${NEXT_VERSION}" || "${NEXT_VERSION}" == "invalid" ]]; then
-            echo "### ERROR: RELEASE_VERSION '${RELEASE_VERSION}' is not of format major[.minor[.incremental[.build]]]"
+            echo "### ERROR: RELEASE_VERSION '${RELEASE_VERSION}' is not of format major[.minor[.patch[.build]]]"
             exit 1
           fi
           echo "version=${CURRENT_VERSION}" >> $GITHUB_OUTPUT
@@ -117,7 +127,7 @@ jobs:
           git config user.name "GitHub CICD"
           git config user.email "${{ github.repository_owner }}@users.noreply.github.com"
           # Update version in gradle.properties to the release version
-          sed -ri 's/^( *version *= *)([a-zA-Z0-9.-]*) *.*$/\1'"${RELEASE_VERSION}"'/g' gradle.properties
+          sed -i -r 's/^( *version *= *)([a-zA-Z0-9.-]*) *.*$/\1'"${RELEASE_VERSION}"'/g' gradle.properties
           echo ">>>>>>>>>>>>>>>>> gradle.properties after update >>>>>>>>>>>>>>>"
           cat gradle.properties
           echo "<<<<<<<<<<<<<<<<< gradle.properties after update <<<<<<<<<<<<<<<"
@@ -139,23 +149,6 @@ jobs:
                         21
           distribution: zulu
           cache: gradle
-
-      # - name: Setup Gradle
-      #   uses: gradle/actions/setup-gradle@v5
-
-      # - name: Update version
-      #    run: |
-      #      sed -i "s/version = \".*\"/version = \"${{ github.event.inputs.version }}\"/g" build.gradle.kts
-      #      sed -i "s/:[0-9]\+\.[0-9]\+\.[0-9]\+/:${{ github.event.inputs.version }}/g" README.md
-      #      sed -i "s/<version>[0-9]\+\.[0-9]\+\.[0-9]\+<\/version>/<version>${{ github.event.inputs.version }}<\/version>/g" README.md
-      #
-      #      git config --global user.email "github-actions@github.com"
-      #      git config --global user.name "GitHub Actions"
-      #
-      #      if [[ -n $(git status --porcelain) ]]; then
-      #        git commit -am "Release version ${{ github.event.inputs.version }}"
-      #        git push origin main
-      #      fi
 
       - name: Build and test
         if: ${{ !inputs.checkVersioningOnly }}
@@ -186,24 +179,19 @@ jobs:
           NEXT_DEV_VERSION: ${{ steps.versions.outputs.nextdev }}
         run: |
           # Update version in gradle.properties to the next dev version
-          sed -ri 's/^( *version *= *)([a-zA-Z0-9.-]*) *.*$/\1'"${NEXT_DEV_VERSION}"'/g' gradle.properties
+          sed -i -r 's/^( *version *= *)([a-zA-Z0-9.-]*) *.*$/\1'"${NEXT_DEV_VERSION}"'/g' gradle.properties
           echo ">>>>>>>>>>>>>>>>> gradle.properties after update >>>>>>>>>>>>>>>"
           cat gradle.properties
           echo "<<<<<<<<<<<<<<<<< gradle.properties after update <<<<<<<<<<<<<<<"
           # Commit changes
           if [[ -n $(git status --porcelain) ]]; then
             git add -A
-            git commit -am "Next dev version ${NEXT_DEV_VERSION}"
+            git commit -am "Next development version ${NEXT_DEV_VERSION}"
           fi
-          if [[ "${{ inputs.checkVersioningOnly }}" == "false" && "${{ inputs.jreleaserDryRun }}" == "false" ]]; then
+          if [[    "${{ inputs.checkVersioningOnly }}" == "false"
+                && "${{ inputs.jreleaserDryRun }}" == "false" ]]; then
             git push origin "${{ github.ref_name }}"
             git push --tags origin
           else
-            echo "Dry run mode - not pushing next development version to remote."
+            echo "Dry run mode - skip pushing to remote."
           fi
-
-      # - name: Update to next development version
-      #   run: |
-      #     sed -i "s/version = \".*\"/version = \"${{ github.event.inputs.next_version }}\"/g" build.gradle.kts
-      #     git commit -am "Prepare for next development version ${{ github.event.inputs.next_version }}"
-      #     git push origin main
