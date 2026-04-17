@@ -31,10 +31,14 @@ import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.artifacts.ModuleDependency
+import org.gradle.api.attributes.Bundling
+import org.gradle.api.attributes.LibraryElements
+import org.gradle.api.attributes.Usage
 import org.gradle.api.attributes.java.TargetJvmEnvironment
 import org.gradle.api.file.ConfigurableFileCollection
 import org.gradle.api.file.Directory
 import org.gradle.api.logging.Logger
+import org.gradle.api.model.ObjectFactory
 import org.gradle.api.provider.Provider
 
 @CompileStatic
@@ -73,8 +77,8 @@ class XtextBuilderPlugin implements Plugin<Project> {
 //        project.plugins.apply(JvmEcosystemPlugin)
         project.extensions.create(XtextBuilderPluginExtension, 'xtextBuilder', XtextBuilderPluginExtension,
                 project.objects, project.layout)
-        xtextStandalone = project.configurations.create(XTEXT_STANDALONE_CONFIGURATION_NAME)
-        xtextCompiler = project.configurations.create(XTEXT_COMPILER_CONFIGURATION_NAME)
+        xtextStandalone = project.configurations.maybeCreate(XTEXT_STANDALONE_CONFIGURATION_NAME)
+        xtextCompiler = project.configurations.maybeCreate(XTEXT_COMPILER_CONFIGURATION_NAME)
         registerTasks(project)
 
         project.afterEvaluate(new Action<Project>() {
@@ -99,11 +103,26 @@ class XtextBuilderPlugin implements Plugin<Project> {
     private void configureXtextConfigurations(Project project, XtextBuilderPluginExtension extension) {
         // Enable configurations to resolve dependency variants - like e.g. guava
         String targetJvmEnvironment = extension.targetJvmEnvironment.get()
-        xtextStandalone.attributes.attribute(TargetJvmEnvironment.TARGET_JVM_ENVIRONMENT_ATTRIBUTE,
-                project.objects.named(TargetJvmEnvironment, targetJvmEnvironment))
-        xtextCompiler.attributes.attribute(TargetJvmEnvironment.TARGET_JVM_ENVIRONMENT_ATTRIBUTE,
-                project.objects.named(TargetJvmEnvironment, targetJvmEnvironment))
+        configureXtextConfiguration(xtextStandalone, targetJvmEnvironment, project.objects)
+        configureXtextConfiguration(xtextCompiler, targetJvmEnvironment, project.objects)
         configureXtextStandaloneConfiguration(project, extension)
+    }
+
+    private void configureXtextConfiguration(Configuration configuration, String targetJvmEnvironment, ObjectFactory objects) {
+        // Use internally only - cannot be consumed by other projects - and not visible in IDEs as a user consumable configuration
+        configuration.setCanBeConsumed(false)
+        // Not intended to be extended by user configurations - but can be extended by other plugin configurations if needed
+        configuration.attributes {
+            it.attribute(TargetJvmEnvironment.TARGET_JVM_ENVIRONMENT_ATTRIBUTE,
+                    objects.named(TargetJvmEnvironment, targetJvmEnvironment))
+            it.attribute(Bundling.BUNDLING_ATTRIBUTE, objects.named(Bundling, Bundling.EXTERNAL))
+            it.attribute(org.gradle.api.attributes.Category.CATEGORY_ATTRIBUTE,
+                    objects.named(org.gradle.api.attributes.Category, org.gradle.api.attributes.Category.LIBRARY))
+            it.attribute(LibraryElements.LIBRARY_ELEMENTS_ATTRIBUTE,
+                    objects.named(LibraryElements, LibraryElements.JAR))
+            it.attribute(Usage.USAGE_ATTRIBUTE,
+                    objects.named(Usage, Usage.JAVA_RUNTIME))
+        }
     }
 
     private void configureXtextBuilder(Project project) {
