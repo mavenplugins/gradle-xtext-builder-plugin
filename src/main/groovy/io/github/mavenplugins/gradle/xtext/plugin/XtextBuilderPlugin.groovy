@@ -126,7 +126,7 @@ class XtextBuilderPlugin implements Plugin<Project> {
     }
 
     private void configureXtextBuilder(Project project) {
-        configureTasks(project, xtextStandalone, xtextCompiler)
+        configureTasks(project)
     }
 
     private boolean hasKordampBasePluginApplied(Project project) {
@@ -204,15 +204,15 @@ class XtextBuilderPlugin implements Plugin<Project> {
                 })
     }
 
-    private void configureTasks(Project project, Configuration xtextStandalone, Configuration xtextLanguages) {
+    private void configureTasks(Project project) {
         XtextBuilderPluginExtension extension = project.extensions.findByType(XtextBuilderPluginExtension)
         project.tasks.withType(GenerateXtextTask).configureEach { GenerateXtextTask t ->
-            t.xtextStandaloneClasspath.from(xtextStandalone)
+            t.xtextStandaloneClasspath.from(xtextStandalone.filter { File it -> it.name.endsWith('.jar') })
             if (PluginResourcesUtil.isPluginIntegrationTestRuntime()) {
                 logger.info("###### Plugin integration test runtime determined.")
                 addProjectBuildClassPathsIfIntegrationTestRuntime(t.xtextStandaloneClasspath)
             }
-            t.xtextCompilerClasspath.from(xtextLanguages)
+            t.xtextCompilerClasspath.from(xtextCompiler.filter { File it -> it.name.endsWith('.jar') })
             // Collect all Java srcDirs from all SourceSetDSL entries lazily
             Provider<List<Directory>> allJavaSrcDirs = project.providers.provider {
                 extension.javaSourceSets
