@@ -89,7 +89,7 @@ abstract class AbstractXtextDefaultTask extends DefaultTask {
     abstract ConfigurableFileCollection getXtextStandaloneClasspath()
 
     @Classpath
-    abstract ConfigurableFileCollection getXtextCompilerClasspath()
+    abstract ConfigurableFileCollection getXtextCompileClasspath()
 
     @InputFiles
     @PathSensitive(PathSensitivity.RELATIVE) // leverage cross machine build caching
@@ -150,10 +150,10 @@ abstract class AbstractXtextDefaultTask extends DefaultTask {
         logger.info("====== Task '{}' xtextStandaloneClasspath URLs[{}] - BEGIN ======", taskName, classpathFiles.size())
         classpathFiles.eachWithIndex { File file, int i -> logger.info("    {} classpath url[{}]={}", taskName, i, file) }
         logger.info("====== Task '{}' xtextStandaloneClasspath URLs[{}] - END ======", taskName, classpathFiles.size())
-        classpathFiles = getXtextCompilerClasspath().files
-        logger.info("====== Task '{}' xtextCompilerClasspath URLs[{}] - BEGIN ======", taskName, classpathFiles.size())
+        classpathFiles = getXtextCompileClasspath().files
+        logger.info("====== Task '{}' xtextCompileClasspath URLs[{}] - BEGIN ======", taskName, classpathFiles.size())
         classpathFiles.eachWithIndex { File file, int i -> logger.info("    {} classpath url[{}]={}", taskName, i, file) }
-        logger.info("====== Task '{}' xtextCompilerClasspath URLs[{}] - END ======", taskName, classpathFiles.size())
+        logger.info("====== Task '{}' xtextCompileClasspath URLs[{}] - END ======", taskName, classpathFiles.size())
     }
 
     private void logList(String context, List<String> elements) {

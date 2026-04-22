@@ -31,7 +31,7 @@ abstract class AbstractXtendIntegrationTest extends AbstractPluginIntegrationTes
             dependencies {
                 xtextStandalone 'org.eclipse.xtend:org.eclipse.xtend.core:${getXtextVersion()}'
 
-                xtextCompiler 'org.eclipse.xtext:org.eclipse.xtext.xbase.lib:${getXtextVersion()}'
+                xtextCompile 'org.eclipse.xtext:org.eclipse.xtext.xbase.lib:${getXtextVersion()}'
             }
         """.stripIndent()
     }

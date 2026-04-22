@@ -51,6 +51,6 @@ class XtextClasspathTest extends AbstractPluginIntegrationTest {
         BuildResult result = build("generateXtext", "--info", "--logXtextConfig")
         assertThat(result.output).contains("====== Task 'GenerateXtextTask' classLoader URLs[${EXPECTED_CLASSPATH_SIZE}] - BEGIN ======")
         assertThat(result.output).contains("====== Task 'GenerateXtextTask' xtextStandaloneClasspath URLs[${expectedStandaloneClasspathSize}] - BEGIN ======")
-        assertThat(result.output).contains("====== Task 'GenerateXtextTask' xtextCompilerClasspath URLs[0] - BEGIN ======")
+        assertThat(result.output).contains("====== Task 'GenerateXtextTask' xtextCompileClasspath URLs[0] - BEGIN ======")
     }
 }

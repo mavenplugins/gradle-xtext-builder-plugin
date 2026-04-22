@@ -83,7 +83,7 @@ abstract class GenerateXtextTask extends AbstractXtextDefaultTask {
     }
 
     private Iterable<String> getClassPathElementsConfigured() {
-        return xtextCompilerClasspath.files.collect { it.absolutePath }
+        return xtextCompileClasspath.files.collect { it.absolutePath }
     }
 
     private Iterable<String> getSourceRootsConfigured() {

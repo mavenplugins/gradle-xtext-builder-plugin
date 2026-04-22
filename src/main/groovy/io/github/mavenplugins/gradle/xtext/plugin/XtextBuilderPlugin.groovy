@@ -45,10 +45,10 @@ import org.gradle.api.provider.Provider
 class XtextBuilderPlugin implements Plugin<Project> {
     private static final String XTEXTBUILDER_GROUP = 'XtextBuilder'
     private static final String XTEXT_STANDALONE_CONFIGURATION_NAME = 'xtextStandalone'
-    private static final String XTEXT_COMPILER_CONFIGURATION_NAME = 'xtextCompiler'
+    private static final String XTEXT_COMPILE_CONFIGURATION_NAME = 'xtextCompile'
 
     private Configuration xtextStandalone
-    private Configuration xtextCompiler
+    private Configuration xtextCompile
 
     private Logger logger
 
@@ -78,7 +78,7 @@ class XtextBuilderPlugin implements Plugin<Project> {
         project.extensions.create(XtextBuilderPluginExtension, 'xtextBuilder', XtextBuilderPluginExtension,
                 project.objects, project.layout)
         xtextStandalone = project.configurations.maybeCreate(XTEXT_STANDALONE_CONFIGURATION_NAME)
-        xtextCompiler = project.configurations.maybeCreate(XTEXT_COMPILER_CONFIGURATION_NAME)
+        xtextCompile = project.configurations.maybeCreate(XTEXT_COMPILE_CONFIGURATION_NAME)
         registerTasks(project)
 
         project.afterEvaluate(new Action<Project>() {
@@ -104,7 +104,7 @@ class XtextBuilderPlugin implements Plugin<Project> {
         // Enable configurations to resolve dependency variants - like e.g. guava
         String targetJvmEnvironment = extension.targetJvmEnvironment.get()
         configureXtextConfiguration(xtextStandalone, targetJvmEnvironment, project.objects)
-        configureXtextConfiguration(xtextCompiler, targetJvmEnvironment, project.objects)
+        configureXtextConfiguration(xtextCompile, targetJvmEnvironment, project.objects)
         configureXtextStandaloneConfiguration(project, extension)
     }
 
@@ -212,7 +212,7 @@ class XtextBuilderPlugin implements Plugin<Project> {
                 logger.info("###### Plugin integration test runtime determined.")
                 addProjectBuildClassPathsIfIntegrationTestRuntime(t.xtextStandaloneClasspath)
             }
-            t.xtextCompilerClasspath.from(xtextCompiler.filter { File it -> it.name.endsWith('.jar') })
+            t.xtextCompileClasspath.from(xtextCompile.filter { File it -> it.name.endsWith('.jar') })
             // Collect all Java srcDirs from all SourceSetDSL entries lazily
             Provider<List<Directory>> allJavaSrcDirs = project.providers.provider {
                 extension.javaSourceSets
