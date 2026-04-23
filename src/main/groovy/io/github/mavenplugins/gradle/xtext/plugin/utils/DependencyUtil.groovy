@@ -21,6 +21,7 @@ package io.github.mavenplugins.gradle.xtext.plugin.utils
 import groovy.transform.CompileDynamic
 import groovy.xml.XmlSlurper
 import groovy.xml.slurpersupport.GPathResult
+import org.gradle.api.GradleException
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.artifacts.ConfigurationContainer
 import org.gradle.api.artifacts.Dependency
@@ -36,7 +37,7 @@ class DependencyUtil {
     }
 
     static String toDependencyNotation(String group, String name, String version = null) {
-        return "${group}:${name}${version?":${version}":''}"
+        return "${group}:${name}${version ? ":${version}" : ''}"
     }
 
     @CompileDynamic
@@ -44,7 +45,8 @@ class DependencyUtil {
             final String bomNotation,
             final DependencyHandler dependencies,
             final ConfigurationContainer configurations,
-            final Logger logger) {
+            final Logger logger,
+            final boolean failOnError = true) {
         final List<String> managedDeps = []
 
         try {
@@ -55,12 +57,16 @@ class DependencyUtil {
             // Resolve to get the actual POM file
             final Set<File> bomFiles = bomConfig.resolve()
             if (bomFiles.isEmpty()) {
-                logger.warn("Could not resolve BOM POM file for: ${bomNotation}")
+                String errMsg = "BOM POM file could not be resolved for: '${bomNotation}'. No managed dependencies will be extracted."
+                if (failOnError) {
+                    throw new RuntimeException(errMsg)
+                }
+                logger.warn(errMsg)
                 return managedDeps
             }
 
             final File pomFile = bomFiles.first()
-            logger.info("Parsing BOM POM file: ${pomFile}")
+            logger.info("Parsing BOM POM '${bomNotation}', file: ${pomFile}")
 
             // Parse the POM XML to extract dependencyManagement section
             GPathResult pom = new XmlSlurper().parse(pomFile)
@@ -73,27 +79,32 @@ class DependencyUtil {
 
                 // Resolve property references in version (e.g., ${project.version})
                 if (version.contains('${')) {
-                    version = resolveMavenProperty(version, pom, logger)
+                    version = resolveMavenProperty(version, pom, bomNotation, logger, failOnError)
                 }
 
                 if (group && name && version) {
                     String notation = "${group}:${name}:${version}"
                     managedDeps.add(notation)
-                    logger.debug("BOM manages: ${notation}")
+                    logger.debug("  BOM manages: ${notation}")
                 }
             }
 
-            logger.info("Extracted ${managedDeps.size()} managed dependencies from BOM")
+            logger.info("  Extracted ${managedDeps.size()} managed dependencies from BOM '${bomNotation}'.")
 
         } catch (Exception e) {
-            logger.warn("Failed to parse BOM ${bomNotation}: ${e.message}", e)
+            String errMsg = "Failed to parse BOM '${bomNotation}': ${e.message}"
+            if (failOnError) {
+                throw new GradleException(errMsg, e)
+            }
+            logger.warn(errMsg, e)
         }
 
         return managedDeps
     }
 
     @CompileDynamic
-    private static String resolveMavenProperty(final String value, final GPathResult pom, final Logger logger) {
+    private static String resolveMavenProperty(
+            final String value, final GPathResult pom, final String bomNotation, final Logger logger, boolean failOnError) {
         if (!value.contains('${')) {
             return value
         }
@@ -103,6 +114,7 @@ class DependencyUtil {
         // Common property patterns
         Pattern propertyPattern = ~/\$\{([^}]+)}/
         Matcher matcher = propertyPattern.matcher(value)
+        boolean foundUnresolved = false
 
         while (matcher.find()) {
             def propertyName = matcher.group(1)
@@ -124,8 +136,17 @@ class DependencyUtil {
             if (propertyValue) {
                 result = result.replace("\${${propertyName}}", propertyValue)
             } else {
-                logger.debug("Could not resolve property: ${propertyName}")
+                foundUnresolved |= true
+                String errMsg = "  Could not resolve property '${propertyName}' in BOM '${bomNotation}' for value '${value}'."
+                if (failOnError) {
+                    logger.error(errMsg)
+                } else {
+                    logger.warn(errMsg)
+                }
             }
+        }
+        if (foundUnresolved && failOnError) {
+            throw new RuntimeException("Unresolved properties of BOM '${bomNotation}'. See previous logs for details.")
         }
 
         return result

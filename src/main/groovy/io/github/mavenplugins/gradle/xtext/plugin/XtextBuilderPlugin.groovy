@@ -207,12 +207,16 @@ class XtextBuilderPlugin implements Plugin<Project> {
     private void configureTasks(Project project) {
         XtextBuilderPluginExtension extension = project.extensions.findByType(XtextBuilderPluginExtension)
         project.tasks.withType(GenerateXtextTask).configureEach { GenerateXtextTask t ->
-            t.xtextStandaloneClasspath.from(xtextStandalone.filter { File it -> it.name.endsWith('.jar') })
+            t.xtextStandaloneClasspath.from(xtextStandalone.filter { File it ->
+                it.isDirectory() || it.name.endsWith('.jar')
+            })
             if (PluginResourcesUtil.isPluginIntegrationTestRuntime()) {
                 logger.info("###### Plugin integration test runtime determined.")
                 addProjectBuildClassPathsIfIntegrationTestRuntime(t.xtextStandaloneClasspath)
             }
-            t.xtextCompileClasspath.from(xtextCompile.filter { File it -> it.name.endsWith('.jar') })
+            t.xtextCompileClasspath.from(xtextCompile.filter { File it ->
+                it.isDirectory() || it.name.endsWith('.jar')
+            })
             // Collect all Java srcDirs from all SourceSetDSL entries lazily
             Provider<List<Directory>> allJavaSrcDirs = project.providers.provider {
                 extension.javaSourceSets
