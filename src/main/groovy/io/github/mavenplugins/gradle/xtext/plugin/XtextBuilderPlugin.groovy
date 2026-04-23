@@ -62,6 +62,14 @@ class XtextBuilderPlugin implements Plugin<Project> {
 //        } else {
 //            System.setProperty(JRELEASER_QUIET, 'true')
 //        }
+        final String pluginVersion = PluginResourcesUtil.pluginVersion
+        final boolean isSnapshotVersion = pluginVersion.endsWith('-SNAPSHOT')
+        final String gitCommitId = PluginResourcesUtil.gitCommitIdShort
+        if (isSnapshotVersion) {
+            logger.lifecycle("=== ${PluginResourcesUtil.pluginNameInLogPrefix} v${pluginVersion}${(isSnapshotVersion && gitCommitId) ? " #${gitCommitId}" : ''} ===")
+        } else {
+            logger.info("=== ${PluginResourcesUtil.pluginNameInLogPrefix} v${pluginVersion} ===")
+        }
         if (project.pluginManager.hasPlugin('org.xtext.builder') || project.pluginManager.hasPlugin('org.xtext.xtend')) {
             throw new IllegalStateException("The 'org.xtext.builder' or 'org.xtext.xtend' plugin cannot be applied together with the '${PluginResourcesUtil.pluginId}' plugin. " +
                     "A project must either use either 'org.xtext.builder' or '${PluginResourcesUtil.pluginId}' but cannot use both at the same time.")

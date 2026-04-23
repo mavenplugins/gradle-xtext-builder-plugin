@@ -78,6 +78,16 @@ class PluginResourcesUtil {
         return getProperty("xtext.minVersion", true)
     }
 
+    static String getGitCommitIdShort() {
+        String gitCommitIdFull = getGitCommitIdFull()
+        int shortLen = 7
+        return gitCommitIdFull ? gitCommitIdFull.substring(0, Math.min(shortLen, gitCommitIdFull.length())) : ''
+    }
+
+    static String getGitCommitIdFull() {
+        return getProperty("git.commit.id", false) ?: ''
+    }
+
     static boolean isPluginIntegrationTestRuntime() {
         final URL[] gradleRuntimeClassLoaderURLs = PluginPackage.class.getClassLoader() instanceof URLClassLoader
                 ? (PluginPackage.class.getClassLoader() as URLClassLoader).getURLs() : null
