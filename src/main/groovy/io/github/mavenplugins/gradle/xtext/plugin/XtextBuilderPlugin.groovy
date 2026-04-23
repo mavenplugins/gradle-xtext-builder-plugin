@@ -211,7 +211,7 @@ class XtextBuilderPlugin implements Plugin<Project> {
                 it.isDirectory() || it.name.endsWith('.jar')
             })
             if (PluginResourcesUtil.isPluginIntegrationTestRuntime()) {
-                logger.info("###### Plugin integration test runtime determined.")
+                logger.lifecycle("> ###### Plugin integration test runtime determined.")
                 addProjectBuildClassPathsIfIntegrationTestRuntime(t.xtextStandaloneClasspath)
             }
             t.xtextCompileClasspath.from(xtextCompile.filter { File it ->
@@ -248,6 +248,9 @@ class XtextBuilderPlugin implements Plugin<Project> {
             t.tempDirectory.convention(
                     project.layout.buildDirectory.dir("tmp/${t.NAME}")
             )
+            t.baseDirectory.convention(
+                    project.layout.projectDirectory
+            )
         }
     }
 
@@ -257,7 +260,7 @@ class XtextBuilderPlugin implements Plugin<Project> {
         classLoader.getURLs().each { URL url ->
             if (url.file.startsWith("${pluginBuildURL.file}classes/")
                     || url.file.startsWith("${pluginBuildURL.file}resources/")) {
-                logger.info("###### Integration test: adding project build URL to classpath: ${url.file}")
+                logger.lifecycle("> ###### Integration test: adding project build URL to classpath: ${url.file}")
                 classPath.from(new File(url.file))
             }
         }

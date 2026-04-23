@@ -32,7 +32,7 @@ import javax.inject.Inject
 /**
  * DSL configuration for {@link ILanguageConfiguration}.
  */
-abstract class LanguageDSL implements Named {
+abstract class LanguageDSL implements ICloneableNamed<LanguageDSL> {
 
     @Input
     private final Property<Boolean> javaSupport
@@ -57,5 +57,16 @@ abstract class LanguageDSL implements Named {
 
     void outputConfigurations(Action<NamedDomainObjectContainer<OutputConfigurationDSL>> action) {
         action.execute(getOutputConfigurations())
+    }
+
+    @Override
+    LanguageDSL clone(ObjectFactory objects) {
+        LanguageDSL clone = objects.newInstance(LanguageDSL, name)
+        clone.javaSupport.set(this.javaSupport.get())
+        clone.setup.set(this.setup.get())
+        this.outputConfigurations.each { outputConfig ->
+            clone.outputConfigurations.add(outputConfig.clone(objects))
+        }
+        return clone
     }
 }

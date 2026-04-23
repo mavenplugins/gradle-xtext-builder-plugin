@@ -33,7 +33,7 @@ import javax.inject.Inject
 /**
  * DSL configuration for {@link OutputConfiguration}.
  */
-abstract class OutputConfigurationDSL implements Named {
+abstract class OutputConfigurationDSL implements ICloneableNamed<OutputConfigurationDSL> {
 
     @Inject
     OutputConfigurationDSL(ObjectFactory objects) {
@@ -152,5 +152,28 @@ abstract class OutputConfigurationDSL implements Named {
         private final DirectoryProperty outputDirectory
         @Input
         private final Property<Boolean> ignore
+    }
+
+    @Override
+    OutputConfigurationDSL clone(ObjectFactory objects) {
+        OutputConfigurationDSL clone = objects.newInstance(OutputConfigurationDSL.class, name)
+        clone.description.set(this.description.get())
+        clone.outputDirectory.set(this.outputDirectory.get())
+        clone.createOutputDirectory.set(this.createOutputDirectory.get())
+        clone.overrideExistingResources.set(this.overrideExistingResources.get())
+        clone.installDslAsPrimarySource.set(this.installDslAsPrimarySource.get())
+        clone.hideSyntheticLocalVariables.set(this.hideSyntheticLocalVariables.get())
+        clone.canClearOutputDirectory.set(this.canClearOutputDirectory.get())
+        clone.cleanUpDerivedResources.set(this.cleanUpDerivedResources.get())
+        this.sourceMappings.get().each { sourceMapping ->
+            SourceMappingDSL clonedSourceMapping = objects.newInstance(SourceMappingDSL.class)
+            clonedSourceMapping.sourceFolder.set(sourceMapping.sourceFolder.get())
+            clonedSourceMapping.outputDirectory.set(sourceMapping.outputDirectory.get())
+            clonedSourceMapping.ignore.set(sourceMapping.ignore.get())
+            clone.sourceMappings.add(clonedSourceMapping)
+        }
+        clone.setDerivedProperty.set(this.setDerivedProperty.get())
+        clone.keepLocalHistory.set(this.keepLocalHistory.get())
+        return clone
     }
 }

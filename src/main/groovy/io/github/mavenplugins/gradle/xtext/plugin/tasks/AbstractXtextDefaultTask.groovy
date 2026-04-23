@@ -20,11 +20,17 @@ package io.github.mavenplugins.gradle.xtext.plugin.tasks
 
 import groovy.transform.CompileStatic
 import io.github.mavenplugins.gradle.xtext.plugin.XtextBuilderPluginExtension
+import io.github.mavenplugins.gradle.xtext.plugin.dsl.LanguageDSL
+import io.github.mavenplugins.gradle.xtext.plugin.utils.CloneUtil
+import org.gradle.api.Action
 import org.gradle.api.DefaultTask
+import org.gradle.api.NamedDomainObjectContainer
 import org.gradle.api.file.ConfigurableFileCollection
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.model.ObjectFactory
+import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.Property
+import org.gradle.api.provider.SetProperty
 import org.gradle.api.tasks.*
 import org.gradle.api.tasks.options.Option
 
@@ -54,7 +60,13 @@ abstract class AbstractXtextDefaultTask extends DefaultTask {
 //    }
 
     @Nested
-    final Property<XtextBuilderPluginExtension> extension
+    final NamedDomainObjectContainer<LanguageDSL> languages
+
+    @Input
+    final ListProperty<String> gradleClassLoaderIncludes
+
+    @Input
+    final ListProperty<String> gradleClassLoaderExcludes
 
     @Input
     final Property<Boolean> logXtextConfig
@@ -69,6 +81,9 @@ abstract class AbstractXtextDefaultTask extends DefaultTask {
     final Property<String> compilerTargetLevel
 
     @Input
+    final Property<String> targetJvmEnvironment
+
+    @Input
     final Property<Boolean> failOnValidationError
 
     @Input
@@ -76,13 +91,17 @@ abstract class AbstractXtextDefaultTask extends DefaultTask {
 
     @Inject
     AbstractXtextDefaultTask(ObjectFactory objects) {
-        extension = objects.property(XtextBuilderPluginExtension).convention(project.extensions.findByType(XtextBuilderPluginExtension))
+        XtextBuilderPluginExtension extension = project.extensions.findByType(XtextBuilderPluginExtension)
+        languages = CloneUtil.cloneNamedDomainObjectContainer(extension.languages, LanguageDSL, objects)
+        gradleClassLoaderIncludes = objects.listProperty(String).convention(extension.gradleClassLoaderIncludes)
+        gradleClassLoaderExcludes = objects.listProperty(String).convention(extension.gradleClassLoaderExcludes)
         logXtextConfig = objects.property(Boolean).convention(false)
         encoding = objects.property(String).convention(StandardCharsets.UTF_8.name())
-        compilerSourceLevel = objects.property(String).convention(extension.get().compilerSourceLevel.get())
-        compilerTargetLevel = objects.property(String).convention(extension.get().compilerTargetLevel.get())
-        failOnValidationError = objects.property(Boolean).convention(extension.get().failOnValidationError.get())
-        incrementalBuild = objects.property(Boolean).convention(extension.get().incrementalBuild.get())
+        compilerSourceLevel = objects.property(String).convention(extension.compilerSourceLevel.get())
+        compilerTargetLevel = objects.property(String).convention(extension.compilerTargetLevel.get())
+        targetJvmEnvironment = objects.property(String).convention(extension.targetJvmEnvironment.get())
+        failOnValidationError = objects.property(Boolean).convention(extension.failOnValidationError.get())
+        incrementalBuild = objects.property(Boolean).convention(extension.incrementalBuild.get())
     }
 
     @Classpath
@@ -110,6 +129,9 @@ abstract class AbstractXtextDefaultTask extends DefaultTask {
     @Internal
     abstract DirectoryProperty getTempDirectory()
 
+    @Internal
+    abstract DirectoryProperty getBaseDirectory()
+
     @Option(option = 'logXtextConfig', description = 'Log actual Xtext config at task execution time on info level (OPTIONAL).')
     void setLogXtextConfig(boolean logXtextConfig) {
         this.logXtextConfig.set(logXtextConfig)
@@ -119,8 +141,8 @@ abstract class AbstractXtextDefaultTask extends DefaultTask {
     void performAction() {
         if (logXtextConfig.getOrElse(false)) {
             logClassLoaderURLs()
-            logList("Xtext gradleClassLoaderInclusions", extension.get().gradleClassLoaderIncludes.get())
-            logList("Xtext gradleClassLoaderExclusions", extension.get().gradleClassLoaderExcludes.get())
+            logList("Xtext gradleClassLoaderInclusions", gradleClassLoaderIncludes.get())
+            logList("Xtext gradleClassLoaderExclusions", gradleClassLoaderExcludes.get())
             javaSourceDirectories.eachWithIndex {javaSourceDirectory, int i ->
                 logger.info("Java source directory[{}]={}", i, javaSourceDirectory)
             }
@@ -134,7 +156,7 @@ abstract class AbstractXtextDefaultTask extends DefaultTask {
                     "Xtext Encoding: " + (!encoding.present ? "not set. Encoding provider will be used." : encoding.get()));
             logger.info("Xtext Compiler source level: " + compilerSourceLevel.get());
             logger.info("Xtext Compiler target level: " + compilerTargetLevel.get());
-            logger.info("Xtext JVM target environment: " + extension.get().targetJvmEnvironment.get());
+            logger.info("Xtext JVM target environment: " + targetJvmEnvironment.get());
         }
     }
 

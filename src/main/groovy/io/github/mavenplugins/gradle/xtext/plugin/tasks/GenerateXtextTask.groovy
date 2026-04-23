@@ -42,14 +42,14 @@ abstract class GenerateXtextTask extends AbstractXtextDefaultTask {
         super.performAction()
         Set<File> classPath = new LinkedHashSet(xtextStandaloneClasspath.files)
         final IXtextStandaloneBuilder builder = XtextStandaloneBuilderProvider.getBuilder(
-                extension.get().languages,
+                languages,
                 classPath,
-                extension.get().gradleClassLoaderIncludes.get(),
-                extension.get().gradleClassLoaderExcludes.get(),
+                gradleClassLoaderIncludes.get(),
+                gradleClassLoaderExcludes.get(),
                 logger
         )
         try {
-            builder.setBaseDir(extension.get().layout.projectDirectory.asFile.absolutePath)
+            builder.setBaseDir(baseDirectory.get().asFile.absolutePath)
             builder.setEncoding(encoding.get())
             builder.setClassPathEntries(getClassPathElementsConfigured())
             builder.setClassPathLookUpFilter(null) // TODO check if this should be configurable
