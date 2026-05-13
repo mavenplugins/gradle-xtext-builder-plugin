@@ -10,7 +10,7 @@ updates:
     directory: /
     schedule:
       interval: daily
-    ignore:
+    #ignore:
       # org.codehaus.plexus must be managed manually
       #   to keep it compliant with maven version
       #- dependency-name: org.codehaus.plexus:plexus-cipher
