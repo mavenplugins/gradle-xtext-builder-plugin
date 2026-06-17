@@ -37,6 +37,8 @@ dependencies {
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
+boolean isWindowsOS = System.getProperty('os.name').toLowerCase().contains('windows')
+
 // Javadoc generation should only include Groovy sources, exclude Java sources and internal packages
 tasks.withType(Javadoc).configureEach {
     exclude '**/*.java'
@@ -87,6 +89,9 @@ tasks.register('testIntegration_010_J8', Test) {
 
     systemProperty 'gradle.version', "${project.gradleJ8Version}"
     systemProperty 'xtext.version', "${project.minXtextVersion}"
+    if (isWindowsOS) {
+        systemProperty 'javax.net.ssl.trustStoreType', 'Windows-ROOT' // fix SSL issues on Windows when running tests with Java 8
+    }
 
     String gradleJ8Version = project.gradleJ8Version
     doFirst {
@@ -113,6 +118,9 @@ tasks.register('testIntegration_020_J17', Test) {
     // Use default Gradle version
     //systemProperty 'gradle.version', "${project.gradleJ8Version}"
     systemProperty 'xtext.version', '2.29.0'
+    if (isWindowsOS) {
+        systemProperty 'javax.net.ssl.trustStoreType', 'Windows-ROOT' // fix SSL issues on Windows when running tests with Java 8
+    }
 
     doFirst {
         logger.lifecycle("Running integration tests with Java ${javaLauncher.get().metadata.languageVersion.asInt()} ...")
@@ -138,6 +146,9 @@ tasks.register('testIntegration_030_J21', Test) {
     // Use default Gradle version
     //systemProperty 'gradle.version', "${project.gradleJ8Version}"
     systemProperty 'xtext.version', '2.35.0'
+    if (isWindowsOS) {
+        systemProperty 'javax.net.ssl.trustStoreType', 'Windows-ROOT' // fix SSL issues on Windows when running tests with Java 8
+    }
 
     doFirst {
         logger.lifecycle("Running integration tests with Java ${javaLauncher.get().metadata.languageVersion.asInt()} ...")
