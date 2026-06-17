@@ -66,7 +66,7 @@ class XtextBuilderPlugin implements Plugin<Project> {
         final boolean isSnapshotVersion = pluginVersion.endsWith('-SNAPSHOT')
         final String gitCommitId = PluginResourcesUtil.gitCommitIdShort
         if (isSnapshotVersion) {
-            logger.lifecycle("=== ${PluginResourcesUtil.pluginNameInLogPrefix} v${pluginVersion}${(isSnapshotVersion && gitCommitId) ? " #${gitCommitId}" : ''} ===")
+            logger.warn("=== ${PluginResourcesUtil.pluginNameInLogPrefix} v${pluginVersion}${(isSnapshotVersion && gitCommitId) ? " #${gitCommitId}" : ''} ===")
         } else {
             logger.info("=== ${PluginResourcesUtil.pluginNameInLogPrefix} v${pluginVersion} ===")
         }
@@ -259,6 +259,11 @@ class XtextBuilderPlugin implements Plugin<Project> {
             t.baseDirectory.convention(
                     project.layout.projectDirectory
             )
+            if (t.name == GenerateXtextTask.NAME && extension.disableDefaultTask.get()) {
+                logger.info("${PluginResourcesUtil.pluginNameInLogPrefix}: Default task '${t.name}' is disabled by plugin extension configuration.")
+                t.enabled = false
+                t.group = null // remove from group to avoid cluttering the task list when disabled
+            }
         }
     }
 

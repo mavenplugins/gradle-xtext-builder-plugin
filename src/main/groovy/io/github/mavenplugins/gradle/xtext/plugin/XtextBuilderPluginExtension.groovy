@@ -94,6 +94,9 @@ abstract class XtextBuilderPluginExtension {
     @Input
     final Property<Boolean> incrementalBuild
 
+    @Input
+    final Property<Boolean> disableDefaultTask
+
     @Inject
     XtextBuilderPluginExtension(ObjectFactory objects, ProjectLayout layout) {
         this.layout = layout
@@ -105,6 +108,7 @@ abstract class XtextBuilderPluginExtension {
         targetJvmEnvironment = objects.property(String).convention(TargetJvmEnvironment.STANDARD_JVM)
         failOnValidationError = objects.property(Boolean).convention(true)
         incrementalBuild = objects.property(Boolean).convention(false)
+        disableDefaultTask = objects.property(Boolean).convention(false)
     }
 
 
