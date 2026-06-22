@@ -37,6 +37,9 @@ dependencies {
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
+//Set Plugin ID as this projects Maven groupId.artifactId:
+ext.pluginId = "${group}.${rootProject.name}"
+
 boolean isWindowsOS = System.getProperty('os.name').toLowerCase().contains('windows')
 
 // Javadoc generation should only include Groovy sources, exclude Java sources and internal packages
@@ -172,12 +175,24 @@ check.dependsOn 'testIntegration_030_J21'
 //}
 
 // Get project properties as a Map for usage in processResources task to expand properties in **/*-expanded.properties files
-// to fix Gradle 9 deprecation warning about calling project in processResources during runtime
-Map projectProperties = project.properties
+// to fix Gradle 9 deprecation warning about calling project in processResources during runtime.
+Map expandedResourceProperties = [
+        pluginVersion              : project.version.toString(),
+        pluginGroup                : project.group.toString(),
+        rootProjectName            : rootProject.name,
+        pluginId                   : pluginId.toString(),
+        pluginBuildDirectory       : layout.buildDirectory.get().asFile.absolutePath.replace('\\', '/'),
+        defaultCompilerSourceLevel : (project.findProperty('sourceCompatibility') ?: project.targetCompatibility).toString(),
+        defaultCompilerTargetLevel : project.targetCompatibility.toString(),
+        xtextMinVersion            : project.minXtextVersion.toString(),
+        gitCommitId                : providers.gradleProperty('git.commit.id').orElse('0000000').get()
+]
 
 processResources {
+    // Explicitly declare values used by expand for stable and cache-friendly inputs.
+    inputs.properties(expandedResourceProperties)
     filesMatching("**/*-expanded.properties") { FileCopyDetails details ->
-        expand projectProperties
+        expand expandedResourceProperties
     }
 }
 
@@ -209,10 +224,6 @@ String pluginOrganization = 'mavenplugins'
 String pluginOrganizationUrlAsString = 'https://github.com/mavenplugins'
 // Note: repo URL must not end with '.git' and must not end with '/'
 String pluginRepoUrlAsString = 'https://github.com/mavenplugins/gradle-xtext-builder-plugin'
-
-
-//Set Plugin ID as this projects Maven groupId.artifactId:
-properties.ext.pluginId = "${group}.${rootProject.name}"
 
 gradlePlugin {
     website = "${pluginWebSiteUrlAsString}"
