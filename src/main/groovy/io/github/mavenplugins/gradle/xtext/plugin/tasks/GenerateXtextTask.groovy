@@ -72,9 +72,13 @@ abstract class GenerateXtextTask extends AbstractXtextDefaultTask {
                     compilerSkipAnnotationProcessing.get(),
                     false  // compilerPreserveInformationAboutFormalParameters TODO check if this should be configurable
             )
-            boolean errorDetected = !builder.launch()
-            if (errorDetected) {
-                throw new GradleException("Xtext generation failed due to a severe validation error.")
+            boolean validationErrorsDetected = !builder.launch()
+            if (validationErrorsDetected) {
+                if (failOnValidationError.get()) {
+                    throw new GradleException("Xtext generation failed due to a severe validation error.")
+                } else {
+                    logger.info("Xtext generation contains validation errors tolerated by this build configuration.")
+                }
             }
             logger.info("Xtext generated {} resource{}.", builder.generatedResourcesCount, builder.generatedResourcesCount == 1 ? '' : 's')
         } finally {
