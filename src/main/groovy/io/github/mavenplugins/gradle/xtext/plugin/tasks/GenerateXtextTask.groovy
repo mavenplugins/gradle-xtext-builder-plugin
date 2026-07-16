@@ -59,7 +59,7 @@ abstract class GenerateXtextTask extends AbstractXtextDefaultTask {
             // Use build/tmp/<taskName> as scratch space - follows Gradle's convention,
             // cleaned by 'clean', deterministic path, no random suffix
             builder.setTempDir(tempDirectory.get().asFile.tap { it.mkdirs() })
-            builder.setDebugLog(logger.isDebugEnabled())
+            builder.setDebugLog(enforceDebugLog.get() || logger.isDebugEnabled())
             builder.setIncrementalBuild(incrementalBuild.get())
             // TODO check if clusteringConfig should be configurable
             //if (clusteringConfig != null) {
@@ -68,8 +68,8 @@ abstract class GenerateXtextTask extends AbstractXtextDefaultTask {
             builder.configureCompiler(
                     compilerSourceLevel.get(),
                     compilerTargetLevel.get(),
-                    logger.isDebugEnabled(),
-                    false, // compilerSkipAnnotationProcessing TODO check if this should be configurable
+                    compilerDebugLog.get() || logger.isDebugEnabled(),
+                    compilerSkipAnnotationProcessing.get(),
                     false  // compilerPreserveInformationAboutFormalParameters TODO check if this should be configurable
             )
             boolean errorDetected = !builder.launch()

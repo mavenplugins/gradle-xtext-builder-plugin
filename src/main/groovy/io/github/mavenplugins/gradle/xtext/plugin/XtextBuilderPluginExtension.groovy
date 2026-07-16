@@ -86,7 +86,13 @@ abstract class XtextBuilderPluginExtension {
     final Property<String> compilerTargetLevel
 
     @Input
+    final Property<Boolean> compilerSkipAnnotationProcessing
+
+    @Input
     final Property<String> targetJvmEnvironment
+
+    @Input
+    final Property<Boolean> enforceDebugLog
 
     @Input
     final Property<Boolean> failOnValidationError
@@ -105,7 +111,9 @@ abstract class XtextBuilderPluginExtension {
         gradleClassLoaderExcludes = objects.listProperty(String).convention(getDefaultGradleClassLoaderExcludes())
         compilerSourceLevel = objects.property(String).convention(PluginResourcesUtil.defaultCompilerSourceLevel)
         compilerTargetLevel = objects.property(String).convention(PluginResourcesUtil.defaultCompilerTargetLevel)
+        compilerSkipAnnotationProcessing = objects.property(Boolean).convention(false)
         targetJvmEnvironment = objects.property(String).convention(TargetJvmEnvironment.STANDARD_JVM)
+        enforceDebugLog = objects.property(Boolean).convention(false)
         failOnValidationError = objects.property(Boolean).convention(true)
         incrementalBuild = objects.property(Boolean).convention(false)
         disableDefaultTask = objects.property(Boolean).convention(false)

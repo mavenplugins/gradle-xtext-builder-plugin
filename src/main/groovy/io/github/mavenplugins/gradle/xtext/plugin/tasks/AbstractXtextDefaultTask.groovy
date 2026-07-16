@@ -22,7 +22,6 @@ import groovy.transform.CompileStatic
 import io.github.mavenplugins.gradle.xtext.plugin.XtextBuilderPluginExtension
 import io.github.mavenplugins.gradle.xtext.plugin.dsl.LanguageDSL
 import io.github.mavenplugins.gradle.xtext.plugin.utils.CloneUtil
-import org.gradle.api.Action
 import org.gradle.api.DefaultTask
 import org.gradle.api.NamedDomainObjectContainer
 import org.gradle.api.file.ConfigurableFileCollection
@@ -30,7 +29,6 @@ import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.model.ObjectFactory
 import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.Property
-import org.gradle.api.provider.SetProperty
 import org.gradle.api.tasks.*
 import org.gradle.api.tasks.options.Option
 
@@ -84,6 +82,15 @@ abstract class AbstractXtextDefaultTask extends DefaultTask {
     final Property<String> targetJvmEnvironment
 
     @Input
+    final Property<Boolean> enforceDebugLog
+
+    @Input
+    final Property<Boolean> compilerDebugLog
+
+    @Input
+    final Property<Boolean> compilerSkipAnnotationProcessing
+
+    @Input
     final Property<Boolean> failOnValidationError
 
     @Input
@@ -97,8 +104,11 @@ abstract class AbstractXtextDefaultTask extends DefaultTask {
         gradleClassLoaderExcludes = objects.listProperty(String).convention(extension.gradleClassLoaderExcludes)
         logXtextConfig = objects.property(Boolean).convention(false)
         encoding = objects.property(String).convention(StandardCharsets.UTF_8.name())
+        enforceDebugLog = objects.property(Boolean).convention(extension.enforceDebugLog.get())
         compilerSourceLevel = objects.property(String).convention(extension.compilerSourceLevel.get())
         compilerTargetLevel = objects.property(String).convention(extension.compilerTargetLevel.get())
+        compilerDebugLog = objects.property(Boolean).convention(extension.enforceDebugLog.get())
+        compilerSkipAnnotationProcessing = objects.property(Boolean).convention(extension.compilerSkipAnnotationProcessing.get())
         targetJvmEnvironment = objects.property(String).convention(extension.targetJvmEnvironment.get())
         failOnValidationError = objects.property(Boolean).convention(extension.failOnValidationError.get())
         incrementalBuild = objects.property(Boolean).convention(extension.incrementalBuild.get())
